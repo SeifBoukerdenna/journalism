@@ -1,11 +1,15 @@
 // src/pages/ScriptEditor.tsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import EmptyState from '../components/common/EmptyState';
 import Tabs from '../components/common/Tabs';
+import useUnsavedChanges from '../hooks/useUnsavedChanges';
+import { useModal } from '../hooks/useModal';
+import ConfirmationDialog from '../components/common/ConfirmationDialog';
+import { showSuccessToast, showErrorToast } from '../utils/toastService';
 
 interface ScriptFormData {
     title: string;
@@ -32,7 +36,11 @@ const ScriptEditor = () => {
     const timerRef = useRef<number | null>(null);
 
     // State for script management
-    const [isScriptModalOpen, setIsScriptModalOpen] = useState(false);
+    const {
+        isOpen: isScriptModalOpen,
+        openModal: openScriptModal,
+        closeModal: closeScriptModal
+    } = useModal(false);
     const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null);
     const [currentScriptId, setCurrentScriptId] = useState<string | null>(null);
     const [activeSectionIndex, setActiveSectionIndex] = useState(0);
@@ -41,6 +49,21 @@ const ScriptEditor = () => {
         characterCount: 0,
         estimatedDuration: '0:00'
     });
+
+    // Unsaved changes tracking
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const {
+        handleNavigation,
+        confirmNavigation,
+        cancelNavigation,
+        showConfirmation,
+        destination
+    } = useUnsavedChanges(hasUnsavedChanges);
+
+    // Auto-save functionality
+    const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+    const autoSaveTimerRef = useRef<number | null>(null);
 
     // Script form data
     const [scriptFormData, setScriptFormData] = useState<ScriptFormData>({
@@ -55,6 +78,38 @@ const ScriptEditor = () => {
         }]
     });
 
+    // Get the current script if one is selected
+    const currentScript = currentScriptId
+        ? scripts.find(s => s.id === currentScriptId)
+        : null;
+
+    // Function to save changes to the current script
+    const saveCurrentScript = useCallback(() => {
+        if (currentScriptId && currentScript) {
+            try {
+                updateScript(currentScriptId, {
+                    ...currentScript,
+                    sections: currentScript.sections.map((section, index) => {
+                        const textareaElement = document.getElementById(`section-content-${index}`) as HTMLTextAreaElement;
+                        const notesElement = document.getElementById(`section-notes-${index}`) as HTMLTextAreaElement;
+
+                        return {
+                            ...section,
+                            content: textareaElement ? textareaElement.value : section.content,
+                            notes: notesElement ? notesElement.value : section.notes || ''
+                        };
+                    })
+                });
+                setHasUnsavedChanges(false);
+                setLastSaved(new Date());
+                showSuccessToast('Script saved successfully');
+            } catch (error) {
+                showErrorToast('Error saving script');
+                console.error('Error saving script:', error);
+            }
+        }
+    }, [currentScript, currentScriptId, updateScript]);
+
     // Filtered scripts based on search query
     const filteredScripts = scripts.filter(script => {
         if (!searchQuery) return true;
@@ -66,11 +121,6 @@ const ScriptEditor = () => {
             )
         );
     });
-
-    // Get the current script if one is selected
-    const currentScript = currentScriptId
-        ? scripts.find(s => s.id === currentScriptId)
-        : null;
 
     // Filtered content plans for the dropdown (only show content plans that don't have a script)
     const availableContentPlans = contentPlans.filter(plan => {
@@ -85,6 +135,7 @@ const ScriptEditor = () => {
         // Filter out content plans that already have a script
         return !scripts.some(s => s.contentPlanId === plan.id);
     });
+
 
     // Reset form data when modal closes
     useEffect(() => {
@@ -120,6 +171,7 @@ const ScriptEditor = () => {
         }
     }, [selectedScriptId, isScriptModalOpen, scripts]);
 
+
     // Calculate script statistics when the current script or active section changes
     useEffect(() => {
         if (currentScript) {
@@ -142,20 +194,76 @@ const ScriptEditor = () => {
         }
     }, [currentScript, activeSectionIndex]);
 
+    // Effect to detect changes for unsaved changes tracking
+    useEffect(() => {
+        if (currentScriptId && currentScript) {
+            // Compare with the original script to detect changes
+            const originalScript = scripts.find(s => s.id === currentScriptId);
+            if (originalScript) {
+                const sectionsChanged = JSON.stringify(currentScript.sections) !== JSON.stringify(originalScript.sections);
+                setHasUnsavedChanges(sectionsChanged);
+            }
+        } else {
+            setHasUnsavedChanges(false);
+        }
+    }, [currentScript, currentScriptId, scripts]);
+
+    // Setup auto-save functionality
+    useEffect(() => {
+        if (autoSaveEnabled && hasUnsavedChanges && currentScriptId) {
+            // Clear any existing timer
+            if (autoSaveTimerRef.current) {
+                window.clearTimeout(autoSaveTimerRef.current);
+            }
+
+            // Set new timer to auto-save after 30 seconds of inactivity
+            autoSaveTimerRef.current = window.setTimeout(() => {
+                saveCurrentScript();
+                setLastSaved(new Date());
+            }, 30000); // 30 seconds
+        }
+
+        // Clean up on unmount
+        return () => {
+            if (autoSaveTimerRef.current) {
+                window.clearTimeout(autoSaveTimerRef.current);
+            }
+        };
+    }, [hasUnsavedChanges, currentScriptId, autoSaveEnabled, saveCurrentScript]);
+
+    // Handle navigation after confirmation
+    useEffect(() => {
+        if (!showConfirmation && destination && destination.startsWith('#')) {
+            const scriptId = destination.substring(1);
+            setCurrentScriptId(scriptId);
+            setActiveSectionIndex(0);
+            setHasUnsavedChanges(false);
+        }
+    }, [showConfirmation, destination]);
+
     // Handle form submission
     const handleScriptSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (selectedScriptId) {
-            updateScript(selectedScriptId, scriptFormData);
-        } else {
-            const newScript = addScript(scriptFormData);
-            // Set the new script as the current script
-            setCurrentScriptId(newScript.id);
-        }
+        try {
+            if (selectedScriptId) {
+                updateScript(selectedScriptId, scriptFormData);
+                showSuccessToast('Script updated successfully');
+            } else {
+                // Fix: Store the returned script and check if it exists before accessing the id
+                const newScript = addScript(scriptFormData);
+                if (newScript && newScript.id) {
+                    setCurrentScriptId(newScript.id);
+                    showSuccessToast('Script created successfully');
+                }
+            }
 
-        setIsScriptModalOpen(false);
-        setSelectedScriptId(null);
+            closeScriptModal();
+            setSelectedScriptId(null);
+        } catch (error) {
+            showErrorToast('Error saving script');
+            console.error('Error saving script:', error);
+        }
     };
 
     // Function to add a new section to the script
@@ -220,25 +328,6 @@ const ScriptEditor = () => {
         });
     };
 
-    // Function to save changes to the current script
-    const saveCurrentScript = () => {
-        if (currentScriptId && currentScript) {
-            updateScript(currentScriptId, {
-                ...currentScript,
-                sections: currentScript.sections.map((section, index) => {
-                    const textareaElement = document.getElementById(`section-content-${index}`) as HTMLTextAreaElement;
-                    const notesElement = document.getElementById(`section-notes-${index}`) as HTMLTextAreaElement;
-
-                    return {
-                        ...section,
-                        content: textareaElement ? textareaElement.value : section.content,
-                        notes: notesElement ? notesElement.value : section.notes || ''
-                    };
-                })
-            });
-        }
-    };
-
     // Function to calculate word count and update estimated duration for a section
     const calculateSectionStats = (content: string, sectionId: string) => {
         // Clear previous timer
@@ -273,6 +362,23 @@ const ScriptEditor = () => {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    // Helper function to format the last saved time
+    const formatLastSaved = (date: Date) => {
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMinutes = Math.floor(diffMs / 60000);
+
+        if (diffMinutes < 1) {
+            return 'just now';
+        } else if (diffMinutes === 1) {
+            return '1 minute ago';
+        } else if (diffMinutes < 60) {
+            return `${diffMinutes} minutes ago`;
+        } else {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    };
+
     // Function to calculate total duration of the script
     const calculateTotalDuration = (sections: typeof scriptFormData.sections) => {
         const totalSeconds = sections.reduce((total, section) => total + (section.duration || 0), 0);
@@ -282,29 +388,29 @@ const ScriptEditor = () => {
     // Open script edit modal
     const openEditScript = (scriptId: string) => {
         setSelectedScriptId(scriptId);
-        setIsScriptModalOpen(true);
+        openScriptModal();
     };
 
     // Function to handle opening a script for editing
     const openScript = (scriptId: string) => {
+        if (hasUnsavedChanges && currentScriptId !== scriptId) {
+            handleNavigation(`#${scriptId}`); // Using a hash to store the destination within the same page
+            return;
+        }
+
         setCurrentScriptId(scriptId);
         setActiveSectionIndex(0);
-
-        // If opening a different script, save the current one first
-        if (currentScriptId && currentScriptId !== scriptId) {
-            saveCurrentScript();
-        }
     };
 
     // Function to create a new script
     const createNewScript = () => {
         // Save the current script first
-        if (currentScriptId) {
+        if (currentScriptId && hasUnsavedChanges) {
             saveCurrentScript();
         }
 
         setSelectedScriptId(null);
-        setIsScriptModalOpen(true);
+        openScriptModal();
     };
 
     return (
@@ -383,20 +489,45 @@ const ScriptEditor = () => {
                     {currentScript ? (
                         <div className="script-editor">
                             <div className="editor-header">
-                                <h2>{currentScript.title}</h2>
-                                <div className="script-statistics">
-                                    <div className="stat-item">
-                                        <span className="material-icons">text_fields</span>
-                                        <span>Words: {scriptStats.wordCount}</span>
+                                <div className="editor-title-area">
+                                    <h2>{currentScript.title}</h2>
+                                    <div className="script-statistics">
+                                        <div className="stat-item">
+                                            <span className="material-icons">text_fields</span>
+                                            <span>Words: {scriptStats.wordCount}</span>
+                                        </div>
+                                        <div className="stat-item">
+                                            <span className="material-icons">schedule</span>
+                                            <span>Estimated Time: {scriptStats.estimatedDuration}</span>
+                                        </div>
+                                        <div className="stat-item">
+                                            <span className="material-icons">segment</span>
+                                            <span>Sections: {currentScript.sections.length}</span>
+                                        </div>
                                     </div>
-                                    <div className="stat-item">
-                                        <span className="material-icons">schedule</span>
-                                        <span>Estimated Time: {scriptStats.estimatedDuration}</span>
+                                </div>
+                                <div className="editor-controls">
+                                    <div className="auto-save-toggle">
+                                        <input
+                                            type="checkbox"
+                                            id="auto-save"
+                                            checked={autoSaveEnabled}
+                                            onChange={() => setAutoSaveEnabled(!autoSaveEnabled)}
+                                        />
+                                        <label htmlFor="auto-save">Auto-save</label>
                                     </div>
-                                    <div className="stat-item">
-                                        <span className="material-icons">segment</span>
-                                        <span>Sections: {currentScript.sections.length}</span>
-                                    </div>
+                                    {lastSaved && (
+                                        <span className="save-status">
+                                            <span className="saved">Last saved: {formatLastSaved(lastSaved)}</span>
+                                        </span>
+                                    )}
+                                    <Button
+                                        variant="primary"
+                                        onClick={saveCurrentScript}
+                                        disabled={!hasUnsavedChanges}
+                                    >
+                                        Save
+                                    </Button>
                                 </div>
                             </div>
 
@@ -419,6 +550,7 @@ const ScriptEditor = () => {
                                             className="add-section-tab"
                                             onClick={() => {
                                                 saveCurrentScript();
+                                                if (!currentScriptId) return;
                                                 updateScript(currentScriptId, {
                                                     ...currentScript,
                                                     sections: [
@@ -449,10 +581,11 @@ const ScriptEditor = () => {
                                                 className="section-title-input"
                                                 value={currentScript.sections[activeSectionIndex]?.title || ''}
                                                 onChange={(e) => {
+                                                    if (!currentScriptId) return;
                                                     updateScript(currentScriptId, {
                                                         ...currentScript,
                                                         sections: currentScript.sections.map((section, index) =>
-                                                            index === activeSectionIndex
+                                                            index === activeSectionIndex // Fixed: changed activeSection to activeSectionIndex
                                                                 ? { ...section, title: e.target.value }
                                                                 : section
                                                         )
@@ -468,7 +601,7 @@ const ScriptEditor = () => {
 
                                                         const newSections = [...currentScript.sections];
                                                         newSections.splice(activeSectionIndex, 1);
-
+                                                        if (!currentScriptId) return;
                                                         updateScript(currentScriptId, {
                                                             ...currentScript,
                                                             sections: newSections
@@ -493,6 +626,7 @@ const ScriptEditor = () => {
                                                         if (activeSectionIndex > 0) {
                                                             [newSections[activeSectionIndex], newSections[activeSectionIndex - 1]] =
                                                                 [newSections[activeSectionIndex - 1], newSections[activeSectionIndex]];
+                                                            if (!currentScriptId) return;
 
                                                             updateScript(currentScriptId, {
                                                                 ...currentScript,
@@ -516,6 +650,7 @@ const ScriptEditor = () => {
                                                         if (activeSectionIndex < newSections.length - 1) {
                                                             [newSections[activeSectionIndex], newSections[activeSectionIndex + 1]] =
                                                                 [newSections[activeSectionIndex + 1], newSections[activeSectionIndex]];
+                                                            if (!currentScriptId) return;
 
                                                             updateScript(currentScriptId, {
                                                                 ...currentScript,
@@ -549,6 +684,8 @@ const ScriptEditor = () => {
                                                                 value={currentScript.sections[activeSectionIndex]?.content || ''}
                                                                 onChange={(e) => {
                                                                     const newContent = e.target.value;
+                                                                    if (!currentScriptId) return;
+
                                                                     updateScript(currentScriptId, {
                                                                         ...currentScript,
                                                                         sections: currentScript.sections.map((section, index) =>
@@ -575,6 +712,8 @@ const ScriptEditor = () => {
                                                                 className="notes-textarea"
                                                                 value={currentScript.sections[activeSectionIndex]?.notes || ''}
                                                                 onChange={(e) => {
+                                                                    if (!currentScriptId) return;
+
                                                                     updateScript(currentScriptId, {
                                                                         ...currentScript,
                                                                         sections: currentScript.sections.map((section, index) =>
@@ -615,7 +754,7 @@ const ScriptEditor = () => {
             <Modal
                 isOpen={isScriptModalOpen}
                 onClose={() => {
-                    setIsScriptModalOpen(false);
+                    closeScriptModal();
                     setSelectedScriptId(null);
                 }}
                 title={selectedScriptId ? "Edit Script Details" : "New Script"}
@@ -625,7 +764,7 @@ const ScriptEditor = () => {
                         <Button
                             variant="outline"
                             onClick={() => {
-                                setIsScriptModalOpen(false);
+                                closeScriptModal();
                                 setSelectedScriptId(null);
                             }}
                         >
@@ -735,6 +874,18 @@ const ScriptEditor = () => {
                     </div>
                 </form>
             </Modal>
+
+            {/* Unsaved Changes Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={showConfirmation}
+                onClose={cancelNavigation}
+                onConfirm={confirmNavigation}
+                title="Unsaved Changes"
+                message="You have unsaved changes. Are you sure you want to leave without saving?"
+                confirmText="Leave"
+                cancelText="Stay"
+                type="warning"
+            />
         </div>
     );
 };

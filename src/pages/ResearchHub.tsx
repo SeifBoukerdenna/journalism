@@ -5,6 +5,8 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import EmptyState from '../components/common/EmptyState';
+import { useModal } from '../hooks/useModal';
+import { showSuccessToast, showErrorToast } from '../utils/toastService';
 
 interface TopicFormData {
     title: string;
@@ -33,8 +35,18 @@ const ResearchHub = () => {
     } = useAppContext();
 
     // State for modals
-    const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
-    const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+    const {
+        isOpen: isTopicModalOpen,
+        openModal: openTopicModal,
+        closeModal: closeTopicModal
+    } = useModal(false);
+
+    const {
+        isOpen: isNoteModalOpen,
+        openModal: openNoteModal,
+        closeModal: closeNoteModal
+    } = useModal(false);
+
     const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
     const [selectedNote, setSelectedNote] = useState<string | null>(null);
     const [activeFilter, setActiveFilter] = useState<string>('all');
@@ -128,35 +140,49 @@ const ResearchHub = () => {
     // Handle form submissions
     const handleTopicSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (selectedTopic) {
-            updateTopic(selectedTopic, topicFormData);
-        } else {
-            addTopic({
-                ...topicFormData,
-                tags: topicFormData.tags
-            });
+        try {
+            if (selectedTopic) {
+                updateTopic(selectedTopic, topicFormData);
+                showSuccessToast('Topic updated successfully');
+            } else {
+                addTopic({
+                    ...topicFormData,
+                    tags: topicFormData.tags
+                });
+                showSuccessToast('Topic created successfully');
+            }
+            closeTopicModal();
+            setSelectedTopic(null);
+        } catch (error) {
+            showErrorToast('Error saving topic');
+            console.error('Error saving topic:', error);
         }
-        setIsTopicModalOpen(false);
-        setSelectedTopic(null);
     };
 
     const handleNoteSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const cleanedSources = noteFormData.sources.filter(source => source.trim() !== '');
+        try {
+            const cleanedSources = noteFormData.sources.filter(source => source.trim() !== '');
 
-        if (selectedNote) {
-            updateResearchNote(selectedNote, {
-                ...noteFormData,
-                sources: cleanedSources
-            });
-        } else {
-            addResearchNote({
-                ...noteFormData,
-                sources: cleanedSources
-            });
+            if (selectedNote) {
+                updateResearchNote(selectedNote, {
+                    ...noteFormData,
+                    sources: cleanedSources
+                });
+                showSuccessToast('Research note updated successfully');
+            } else {
+                addResearchNote({
+                    ...noteFormData,
+                    sources: cleanedSources
+                });
+                showSuccessToast('Research note created successfully');
+            }
+            closeNoteModal();
+            setSelectedNote(null);
+        } catch (error) {
+            showErrorToast('Error saving research note');
+            console.error('Error saving research note:', error);
         }
-        setIsNoteModalOpen(false);
-        setSelectedNote(null);
     };
 
     // Function to handle tag input in the topic form
@@ -214,13 +240,42 @@ const ResearchHub = () => {
     // Open edit modal for a topic
     const openEditTopic = (topicId: string) => {
         setSelectedTopic(topicId);
-        setIsTopicModalOpen(true);
+        openTopicModal();
     };
 
     // Open edit modal for a note
     const openEditNote = (noteId: string) => {
         setSelectedNote(noteId);
-        setIsNoteModalOpen(true);
+        openNoteModal();
+    };
+
+    // Delete a topic with confirmation
+    const confirmDeleteTopic = (id: string) => {
+        if (window.confirm('Are you sure you want to delete this topic? All related notes will also be deleted.')) {
+            try {
+                deleteTopic(id);
+                showSuccessToast('Topic deleted successfully');
+                if (selectedTopic === id) {
+                    setSelectedTopic(null);
+                }
+            } catch (error) {
+                showErrorToast('Error deleting topic');
+                console.error('Error deleting topic:', error);
+            }
+        }
+    };
+
+    // Delete a note with confirmation
+    const confirmDeleteNote = (id: string) => {
+        if (window.confirm('Are you sure you want to delete this research note?')) {
+            try {
+                deleteResearchNote(id);
+                showSuccessToast('Research note deleted successfully');
+            } catch (error) {
+                showErrorToast('Error deleting note');
+                console.error('Error deleting note:', error);
+            }
+        }
     };
 
     // Format date to display in a readable format
@@ -263,8 +318,8 @@ const ResearchHub = () => {
                         variant="outline"
                         icon="bookmark_add"
                         onClick={() => {
-                            setSelectedTopic(null);
-                            setIsNoteModalOpen(true);
+                            setSelectedNote(null);
+                            openNoteModal();
                         }}
                     >
                         Add Note
@@ -275,7 +330,7 @@ const ResearchHub = () => {
                         icon="add"
                         onClick={() => {
                             setSelectedTopic(null);
-                            setIsTopicModalOpen(true);
+                            openTopicModal();
                         }}
                     >
                         New Topic
@@ -338,6 +393,16 @@ const ResearchHub = () => {
                                             >
                                                 <span className="material-icons">edit</span>
                                             </button>
+                                            <button
+                                                className="btn-icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    confirmDeleteTopic(topic.id);
+                                                }}
+                                                aria-label="Delete topic"
+                                            >
+                                                <span className="material-icons">delete</span>
+                                            </button>
                                         </div>
                                     </div>
                                 ))
@@ -348,7 +413,7 @@ const ResearchHub = () => {
                                     icon="topic"
                                     action={{
                                         label: "New Topic",
-                                        onClick: () => setIsTopicModalOpen(true)
+                                        onClick: () => openTopicModal()
                                     }}
                                 />
                             )}
@@ -381,7 +446,7 @@ const ResearchHub = () => {
                                                 </button>
                                                 <button
                                                     className="btn-icon"
-                                                    onClick={() => deleteResearchNote(note.id)}
+                                                    onClick={() => confirmDeleteNote(note.id)}
                                                     aria-label="Delete note"
                                                 >
                                                     <span className="material-icons">delete</span>
@@ -417,7 +482,7 @@ const ResearchHub = () => {
                                 icon="note_add"
                                 action={{
                                     label: "Add Note",
-                                    onClick: () => setIsNoteModalOpen(true)
+                                    onClick: () => openNoteModal()
                                 }}
                             />
                         )}
@@ -429,7 +494,7 @@ const ResearchHub = () => {
             <Modal
                 isOpen={isTopicModalOpen}
                 onClose={() => {
-                    setIsTopicModalOpen(false);
+                    closeTopicModal();
                     setSelectedTopic(null);
                 }}
                 title={selectedTopic ? "Edit Topic" : "New Research Topic"}
@@ -438,7 +503,7 @@ const ResearchHub = () => {
                         <Button
                             variant="outline"
                             onClick={() => {
-                                setIsTopicModalOpen(false);
+                                closeTopicModal();
                                 setSelectedTopic(null);
                             }}
                         >
@@ -511,7 +576,7 @@ const ResearchHub = () => {
             <Modal
                 isOpen={isNoteModalOpen}
                 onClose={() => {
-                    setIsNoteModalOpen(false);
+                    closeNoteModal();
                     setSelectedNote(null);
                 }}
                 title={selectedNote ? "Edit Research Note" : "New Research Note"}
@@ -521,7 +586,7 @@ const ResearchHub = () => {
                         <Button
                             variant="outline"
                             onClick={() => {
-                                setIsNoteModalOpen(false);
+                                closeNoteModal();
                                 setSelectedNote(null);
                             }}
                         >
@@ -573,8 +638,8 @@ const ResearchHub = () => {
                                         type="button"
                                         className="btn-link"
                                         onClick={() => {
-                                            setIsNoteModalOpen(false);
-                                            setIsTopicModalOpen(true);
+                                            closeNoteModal();
+                                            openTopicModal();
                                         }}
                                     >
                                         Create a topic first

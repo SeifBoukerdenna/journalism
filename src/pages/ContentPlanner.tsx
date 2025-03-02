@@ -6,6 +6,8 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import EmptyState from '../components/common/EmptyState';
+import { useModal } from '../hooks/useModal';
+import { showSuccessToast, showErrorToast } from '../utils/toastService';
 
 interface ContentFormData {
     title: string;
@@ -26,7 +28,11 @@ const ContentPlanner = () => {
     } = useAppContext();
 
     // State for modals and content management
-    const [isContentModalOpen, setIsContentModalOpen] = useState(false);
+    const {
+        isOpen: isContentModalOpen,
+        openModal: openContentModal,
+        closeModal: closeContentModal
+    } = useModal(false);
     const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'calendar' | 'kanban' | 'list'>('kanban');
 
@@ -121,21 +127,28 @@ const ContentPlanner = () => {
     const handleContentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const formattedData = {
-            ...contentFormData,
-            scheduledDate: contentFormData.scheduledDate
-                ? new Date(contentFormData.scheduledDate)
-                : undefined
-        };
+        try {
+            const formattedData = {
+                ...contentFormData,
+                scheduledDate: contentFormData.scheduledDate
+                    ? new Date(contentFormData.scheduledDate)
+                    : undefined
+            };
 
-        if (selectedContentId) {
-            updateContentPlan(selectedContentId, formattedData);
-        } else {
-            addContentPlan(formattedData);
+            if (selectedContentId) {
+                updateContentPlan(selectedContentId, formattedData);
+                showSuccessToast('Content plan updated successfully');
+            } else {
+                addContentPlan(formattedData);
+                showSuccessToast('Content plan created successfully');
+            }
+
+            closeContentModal();
+            setSelectedContentId(null);
+        } catch (error) {
+            showErrorToast('Error saving content plan');
+            console.error('Error saving content plan:', error);
         }
-
-        setIsContentModalOpen(false);
-        setSelectedContentId(null);
     };
 
     // Function to handle topic selection in the content form
@@ -156,12 +169,31 @@ const ContentPlanner = () => {
     // Open edit modal for content
     const openEditContent = (contentId: string) => {
         setSelectedContentId(contentId);
-        setIsContentModalOpen(true);
+        openContentModal();
     };
 
     // Function to move content between status columns in Kanban view
     const moveContent = (contentId: string, newStatus: ContentFormData['status']) => {
-        updateContentPlan(contentId, { status: newStatus });
+        try {
+            updateContentPlan(contentId, { status: newStatus });
+            showSuccessToast(`Content moved to ${getStatusInfo(newStatus).label}`);
+        } catch (error) {
+            showErrorToast('Error moving content');
+            console.error('Error moving content:', error);
+        }
+    };
+
+    // Confirm delete content plan
+    const confirmDeleteContentPlan = (id: string) => {
+        if (window.confirm('Are you sure you want to delete this content plan?')) {
+            try {
+                deleteContentPlan(id);
+                showSuccessToast('Content plan deleted');
+            } catch (error) {
+                showErrorToast('Error deleting content plan');
+                console.error('Error deleting content plan:', error);
+            }
+        }
     };
 
     // Format date for display
@@ -227,7 +259,7 @@ const ContentPlanner = () => {
                         icon="add"
                         onClick={() => {
                             setSelectedContentId(null);
-                            setIsContentModalOpen(true);
+                            openContentModal();
                         }}
                     >
                         New Content
@@ -343,7 +375,7 @@ const ContentPlanner = () => {
                                                         ...contentFormData,
                                                         status: 'idea'
                                                     });
-                                                    setIsContentModalOpen(true);
+                                                    openContentModal();
                                                 }}
                                             >
                                                 <span className="material-icons">add</span>
@@ -428,7 +460,7 @@ const ContentPlanner = () => {
                                 icon="calendar_month"
                                 action={{
                                     label: "New Content",
-                                    onClick: () => setIsContentModalOpen(true)
+                                    onClick: () => openContentModal()
                                 }}
                             />
                         )}
@@ -495,7 +527,7 @@ const ContentPlanner = () => {
                                                         </button>
                                                         <button
                                                             className="btn-icon"
-                                                            onClick={() => deleteContentPlan(plan.id)}
+                                                            onClick={() => confirmDeleteContentPlan(plan.id)}
                                                             aria-label="Delete content"
                                                         >
                                                             <span className="material-icons">delete</span>
@@ -514,7 +546,7 @@ const ContentPlanner = () => {
                                 icon="video_library"
                                 action={{
                                     label: "New Content",
-                                    onClick: () => setIsContentModalOpen(true)
+                                    onClick: () => openContentModal()
                                 }}
                             />
                         )}
@@ -526,7 +558,7 @@ const ContentPlanner = () => {
             <Modal
                 isOpen={isContentModalOpen}
                 onClose={() => {
-                    setIsContentModalOpen(false);
+                    closeContentModal();
                     setSelectedContentId(null);
                 }}
                 title={selectedContentId ? "Edit Content Plan" : "New Content Plan"}
@@ -536,7 +568,7 @@ const ContentPlanner = () => {
                         <Button
                             variant="outline"
                             onClick={() => {
-                                setIsContentModalOpen(false);
+                                closeContentModal();
                                 setSelectedContentId(null);
                             }}
                         >

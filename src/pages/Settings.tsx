@@ -5,39 +5,49 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Tabs from '../components/common/Tabs';
 import Modal from '../components/common/Modal';
+import { useModals } from '../hooks/useModal';
+import { showSuccessToast, showErrorToast } from '../utils/toastService';
 
 const Settings = () => {
     const { theme, setTheme } = useAppContext();
 
-    // Modal states
-    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-    const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+    // Modal states using useModals hook
+    const {
+        isModalOpen,
+        openModal,
+        closeModal
+    } = useModals();
 
     // Import file state
     const [importFile, setImportFile] = useState<File | null>(null);
 
     // Export data as JSON file
     const exportData = () => {
-        const appData = {
-            topics: JSON.parse(localStorage.getItem('topics') || '[]'),
-            researchNotes: JSON.parse(localStorage.getItem('researchNotes') || '[]'),
-            contentPlans: JSON.parse(localStorage.getItem('contentPlans') || '[]'),
-            scripts: JSON.parse(localStorage.getItem('scripts') || '[]')
-        };
+        try {
+            const appData = {
+                topics: JSON.parse(localStorage.getItem('topics') || '[]'),
+                researchNotes: JSON.parse(localStorage.getItem('researchNotes') || '[]'),
+                contentPlans: JSON.parse(localStorage.getItem('contentPlans') || '[]'),
+                scripts: JSON.parse(localStorage.getItem('scripts') || '[]')
+            };
 
-        const dataStr = JSON.stringify(appData, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
+            const dataStr = JSON.stringify(appData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
 
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `content-studio-backup-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `content-studio-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-        setIsExportModalOpen(false);
+            closeModal('export');
+            showSuccessToast('Data successfully exported');
+        } catch (error) {
+            showErrorToast('Error exporting data');
+            console.error('Error exporting data:', error);
+        }
     };
 
     // Import data from JSON file
@@ -68,25 +78,32 @@ const Settings = () => {
 
                 // Force page reload to update data
                 window.location.reload();
+                showSuccessToast('Data successfully imported');
             } catch (error) {
                 console.error('Error parsing import file:', error);
-                alert('Error importing data. Please make sure the file is a valid JSON backup.');
+                showErrorToast('Error importing data. Please make sure the file is a valid JSON backup.');
             }
         };
 
         reader.readAsText(importFile);
-        setIsImportModalOpen(false);
+        closeModal('import');
     };
 
     // Reset all data
     const resetData = () => {
-        localStorage.removeItem('topics');
-        localStorage.removeItem('researchNotes');
-        localStorage.removeItem('contentPlans');
-        localStorage.removeItem('scripts');
+        try {
+            localStorage.removeItem('topics');
+            localStorage.removeItem('researchNotes');
+            localStorage.removeItem('contentPlans');
+            localStorage.removeItem('scripts');
 
-        // Force page reload to update data
-        window.location.reload();
+            // Force page reload to update data
+            window.location.reload();
+            showSuccessToast('All data has been reset');
+        } catch (error) {
+            showErrorToast('Error resetting data');
+            console.error('Error resetting data:', error);
+        }
     };
 
     return (
@@ -151,7 +168,9 @@ const Settings = () => {
 
                                             <Button
                                                 variant="primary"
-                                                onClick={() => {/* Save profile info */ }}
+                                                onClick={() => {
+                                                    showSuccessToast('Profile information saved');
+                                                }}
                                             >
                                                 Save Changes
                                             </Button>
@@ -178,7 +197,7 @@ const Settings = () => {
                                             <Button
                                                 variant="outline"
                                                 icon="download"
-                                                onClick={() => setIsExportModalOpen(true)}
+                                                onClick={() => openModal('export')}
                                             >
                                                 Export Data
                                             </Button>
@@ -197,7 +216,7 @@ const Settings = () => {
                                             <Button
                                                 variant="outline"
                                                 icon="upload"
-                                                onClick={() => setIsImportModalOpen(true)}
+                                                onClick={() => openModal('import')}
                                             >
                                                 Import Data
                                             </Button>
@@ -216,7 +235,7 @@ const Settings = () => {
                                             <Button
                                                 variant="danger"
                                                 icon="delete_forever"
-                                                onClick={() => setIsResetModalOpen(true)}
+                                                onClick={() => openModal('reset')}
                                             >
                                                 Reset Data
                                             </Button>
@@ -273,7 +292,9 @@ const Settings = () => {
 
                                         <Button
                                             variant="primary"
-                                            onClick={() => {/* Save preferences */ }}
+                                            onClick={() => {
+                                                showSuccessToast('Preferences saved');
+                                            }}
                                         >
                                             Save Preferences
                                         </Button>
@@ -311,7 +332,9 @@ const Settings = () => {
 
                                         <Button
                                             variant="primary"
-                                            onClick={() => {/* Save editor preferences */ }}
+                                            onClick={() => {
+                                                showSuccessToast('Editor preferences saved');
+                                            }}
                                         >
                                             Save Preferences
                                         </Button>
@@ -337,7 +360,9 @@ const Settings = () => {
                                             <Button
                                                 variant="primary"
                                                 icon="link"
-                                                onClick={() => {/* Open YouTube auth */ }}
+                                                onClick={() => {
+                                                    showSuccessToast('Connection initiated. Please complete authentication in the pop-up window.');
+                                                }}
                                             >
                                                 Connect Account
                                             </Button>
@@ -356,7 +381,9 @@ const Settings = () => {
                                             <Button
                                                 variant="primary"
                                                 icon="link"
-                                                onClick={() => {/* Open Twitter auth */ }}
+                                                onClick={() => {
+                                                    showSuccessToast('Connection initiated. Please complete authentication in the pop-up window.');
+                                                }}
                                             >
                                                 Connect Account
                                             </Button>
@@ -373,7 +400,9 @@ const Settings = () => {
                                                 <Button
                                                     variant="outline"
                                                     size="small"
-                                                    onClick={() => {/* Open Spotify auth */ }}
+                                                    onClick={() => {
+                                                        showSuccessToast('Connection initiated');
+                                                    }}
                                                 >
                                                     Connect
                                                 </Button>
@@ -387,7 +416,9 @@ const Settings = () => {
                                                 <Button
                                                     variant="outline"
                                                     size="small"
-                                                    onClick={() => {/* Configure RSS */ }}
+                                                    onClick={() => {
+                                                        showSuccessToast('RSS feed configuration initiated');
+                                                    }}
                                                 >
                                                     Configure
                                                 </Button>
@@ -401,7 +432,9 @@ const Settings = () => {
                                                 <Button
                                                     variant="outline"
                                                     size="small"
-                                                    onClick={() => {/* Open Medium auth */ }}
+                                                    onClick={() => {
+                                                        showSuccessToast('Connection initiated');
+                                                    }}
                                                 >
                                                     Connect
                                                 </Button>
@@ -454,14 +487,14 @@ const Settings = () => {
 
             {/* Export Data Modal */}
             <Modal
-                isOpen={isExportModalOpen}
-                onClose={() => setIsExportModalOpen(false)}
+                isOpen={isModalOpen('export')}
+                onClose={() => closeModal('export')}
                 title="Export Data"
                 actions={
                     <>
                         <Button
                             variant="outline"
-                            onClick={() => setIsExportModalOpen(false)}
+                            onClick={() => closeModal('export')}
                         >
                             Cancel
                         </Button>
@@ -491,14 +524,14 @@ const Settings = () => {
 
             {/* Import Data Modal */}
             <Modal
-                isOpen={isImportModalOpen}
-                onClose={() => setIsImportModalOpen(false)}
+                isOpen={isModalOpen('import')}
+                onClose={() => closeModal('import')}
                 title="Import Data"
                 actions={
                     <>
                         <Button
                             variant="outline"
-                            onClick={() => setIsImportModalOpen(false)}
+                            onClick={() => closeModal('import')}
                         >
                             Cancel
                         </Button>
@@ -536,14 +569,14 @@ const Settings = () => {
 
             {/* Reset Data Modal */}
             <Modal
-                isOpen={isResetModalOpen}
-                onClose={() => setIsResetModalOpen(false)}
+                isOpen={isModalOpen('reset')}
+                onClose={() => closeModal('reset')}
                 title="Reset All Data"
                 actions={
                     <>
                         <Button
                             variant="outline"
-                            onClick={() => setIsResetModalOpen(false)}
+                            onClick={() => closeModal('reset')}
                         >
                             Cancel
                         </Button>

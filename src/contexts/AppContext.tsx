@@ -64,7 +64,7 @@ interface AppContextType {
     updateContentPlan: (id: string, plan: Partial<ContentPlan>) => void;
     deleteContentPlan: (id: string) => void;
     scripts: Script[];
-    addScript: (script: Omit<Script, 'id' | 'createdAt' | 'updatedAt'>) => void;
+    addScript: (script: Omit<Script, 'id' | 'createdAt' | 'updatedAt'>) => Script;
     updateScript: (id: string, script: Partial<Script>) => void;
     deleteScript: (id: string) => void;
     searchQuery: string;
@@ -192,9 +192,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
             updatedAt: new Date()
         };
         setScripts(prev => [...prev, newScript]);
+        return newScript; // Explicitly return the newly created script
     };
 
-    const updateScript = (id: string, script: Partial<Script>) => {
+    const updateScript = (id: string | null, script: Partial<Script>) => {
+        if (!id) return
         setScripts(prev =>
             prev.map(s => s.id === id ? { ...s, ...script, updatedAt: new Date() } : s)
         );

@@ -1633,186 +1633,147 @@
   --transition-speed: 0.2s;
 }
 
-/* Dark Theme */
+
+
+/* Enhanced Dark Mode Styling - Add to index.css after the existing .dark section */
+
 .dark {
-  /* Primary colors with improved contrast */
-  --primary-color: #60a5fa;
-  /* Brighter blue for better visibility */
-  --primary-hover: #3b82f6;
-  --secondary-color: #a5b4fc;
-  /* Lighter secondary color */
-  --accent-color: #a78bfa;
-  /* Brighter accent */
-
-  /* Background colors with better contrast */
-  --bg-color: #111827;
-  /* Slightly darker background */
-  --card-bg-color: #1f2937;
-  /* Darker card background */
-  --sidebar-bg-color: #1a2234;
-  /* Slightly darker sidebar */
-
-  /* Text colors with better contrast */
-  --text-color: #f3f4f6;
-  /* Whiter text for better readability */
-  --text-light: #d1d5db;
+  /* Improved text colors with higher contrast */
+  --text-color: #f8fafc;
+  /* Even whiter text for better readability */
+  --text-light: #e2e8f0;
   /* Lighter secondary text */
-  --text-xlight: #9ca3af;
+  --text-xlight: #cbd5e1;
   /* Lighter tertiary text */
 
-  /* Border colors with improved visibility */
-  --border-color: #374151;
-  /* Lighter border color */
-  --divider-color: #374151;
+  /* Slightly adjusted background colors */
+  --bg-color: #0f172a;
+  /* Slightly darker background */
+  --card-bg-color: #1e293b;
+  /* Adjusted card background */
+  --sidebar-bg-color: #0f172a;
+  /* Matching sidebar with background */
 
-  /* Status colors with better visibility in dark mode */
-  --status-gray-bg: rgba(156, 163, 175, 0.2);
-  --status-gray-text: #d1d5db;
+  /* Improved border colors */
+  --border-color: #334155;
+  /* Lighter border color for better contrast */
 
-  --status-blue-bg: rgba(59, 130, 246, 0.2);
-  --status-blue-text: #93c5fd;
-
-  --status-purple-bg: rgba(139, 92, 246, 0.2);
-  --status-purple-text: #c4b5fd;
-
-  --status-orange-bg: rgba(249, 115, 22, 0.2);
-  --status-orange-text: #fdba74;
-
-  --status-yellow-bg: rgba(245, 158, 11, 0.2);
-  --status-yellow-text: #fcd34d;
-
-  --status-teal-bg: rgba(20, 184, 166, 0.2);
-  --status-teal-text: #5eead4;
-
-  --status-green-bg: rgba(16, 185, 129, 0.2);
-  --status-green-text: #6ee7b7;
-
-  /* Shadows with better visibility */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  /* Adjusted primary color for dark mode */
+  --primary-color: #3b82f6;
+  /* Brighter blue for better visibility */
+  --primary-hover: #2563eb;
 }
 
-/* Dark mode specific overrides */
-.dark .kanban-column {
-  background-color: rgba(31, 41, 55, 0.8);
-  border-color: #374151;
-}
-
-.dark .kanban-header {
-  background-color: rgba(17, 24, 39, 0.8);
-}
-
+/* Specific component fixes for dark mode */
 .dark .kanban-item {
-  background-color: #1f2937;
-  border-color: #374151;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background-color: #1e293b;
+  /* Slightly lighter than bg */
+  border: 1px solid #334155;
+  /* More visible border */
 }
 
-.dark .kanban-item:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+.dark .script-textarea,
+.dark .notes-textarea {
+  background-color: #0f172a;
+  /* Darker background for text areas */
+  color: #f8fafc;
+  /* Brighter text */
 }
 
-.dark .modal {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+.dark .script-info h3,
+.dark .topic-info h3,
+.dark .note-header h3,
+.dark .card-title,
+.dark .section-title-input {
+  color: #f8fafc;
+  /* Ensure headings are clearly visible */
 }
 
-.dark .btn-icon {
-  color: #d1d5db;
-}
-
-.dark .btn-icon:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark .form-group input,
-.dark .form-group select,
-.dark .form-group textarea {
-  background-color: #111827;
-  border-color: #374151;
-}
-
-.dark .form-group input:focus,
-.dark .form-group select:focus,
-.dark .form-group textarea:focus {
-  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
-}
-
+.dark .topic-badge,
 .dark .status-badge {
-  /* Use the custom status colors */
-  color: var(--text-color);
+  color: #f8fafc;
+  /* Ensure text in badges is readable */
+  background-color: rgba(59, 130, 246, 0.2);
+  /* More visible background */
 }
 
-.dark .status-gray {
-  background-color: var(--status-gray-bg);
-  color: var(--status-gray-text);
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #0f172a !important;
+  /* Force darker backgrounds */
+  color: #f8fafc !important;
+  /* Force brighter text */
+  border-color: #475569 !important;
+  /* More visible borders */
 }
 
-.dark .status-blue {
-  background-color: var(--status-blue-bg);
-  color: var(--status-blue-text);
-}
-
-.dark .status-purple {
-  background-color: var(--status-purple-bg);
-  color: var(--status-purple-text);
-}
-
-.dark .status-orange {
-  background-color: var(--status-orange-bg);
-  color: var(--status-orange-text);
-}
-
-.dark .status-yellow {
-  background-color: var(--status-yellow-bg);
-  color: var(--status-yellow-text);
-}
-
-.dark .status-teal {
-  background-color: var(--status-teal-bg);
-  color: var(--status-teal-text);
-}
-
-.dark .status-green {
-  background-color: var(--status-green-bg);
-  color: var(--status-green-text);
-}
-
-.dark .add-kanban-item {
-  border-color: #4b5563;
-  color: #d1d5db;
-}
-
-.dark .topic-badge {
-  background-color: rgba(96, 165, 250, 0.15);
-  color: #93c5fd;
-}
-
-/* Improved sidebar in dark mode */
-.dark .sidebar {
-  background-color: #1a2234;
-  border-color: #374151;
-}
-
-.dark .sidebar-nav li a:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+.dark .sidebar-nav li a {
+  color: #e2e8f0;
+  /* Brighter navigation text */
 }
 
 .dark .sidebar-nav li.active a {
-  background-color: rgba(96, 165, 250, 0.15);
+  background-color: rgba(59, 130, 246, 0.2);
+  /* More visible active state */
+  color: #3b82f6;
+}
+
+/* Fix headers and important text */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  color: #f8fafc;
+}
+
+/* Fix modal content for better readability */
+.dark .modal-content,
+.dark .form-group label {
+  color: #f8fafc;
+}
+
+/* Make sure status badges have enough contrast in dark mode */
+.dark .status-gray {
+  background-color: rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+}
+
+.dark .status-blue {
+  background-color: rgba(59, 130, 246, 0.2);
   color: #93c5fd;
 }
 
-/* Improved topbar in dark mode */
-.dark .topbar {
-  background-color: #1a2234;
-  border-color: #374151;
+.dark .status-purple {
+  background-color: rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
 }
 
-.dark .search-input {
-  background-color: #111827;
-  border-color: #374151;
+.dark .status-orange {
+  background-color: rgba(249, 115, 22, 0.2);
+  color: #fdba74;
 }
+
+.dark .status-yellow {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+
+.dark .status-teal {
+  background-color: rgba(20, 184, 166, 0.2);
+  color: #5eead4;
+}
+
+.dark .status-green {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+
+
+
 
 body {
   font-family: 'Inter', sans-serif;

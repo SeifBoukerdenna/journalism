@@ -41,7 +41,6 @@ const useUnsavedChanges = (
             duration: 3000,
           });
         }
-
         return false; // Prevent immediate navigation
       }
 
