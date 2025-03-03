@@ -1,13 +1,17 @@
 // src/pages/Dashboard.tsx
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Tabs from '../components/common/Tabs';
 import { useAppContext } from '../contexts/AppContext';
 
+import '../styles/dashboard.css';
+
 const Dashboard = () => {
     const { contentPlans } = useAppContext();
     const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
+    const navigate = useNavigate();
 
     // Filter content plans by status
     const upcomingVideos = contentPlans.filter(plan => {
@@ -78,6 +82,23 @@ const Dashboard = () => {
         });
     };
 
+    // Handle quick actions
+    const handleQuickAction = (action: string) => {
+        switch (action) {
+            case 'contentPlan':
+                navigate('/planner', { state: { openContentModal: true } });
+                break;
+            case 'researchNote':
+                navigate('/research', { state: { openNoteModal: true } });
+                break;
+            case 'script':
+                navigate('/script', { state: { openScriptModal: true } });
+                break;
+            default:
+                break;
+        }
+    };
+
     return (
         <div className="dashboard-container">
             <div className="dashboard-header">
@@ -86,7 +107,7 @@ const Dashboard = () => {
                     <Button
                         variant="primary"
                         icon="add"
-                        onClick={() => {/* Open modal to create new content */ }}
+                        onClick={() => handleQuickAction('contentPlan')}
                     >
                         New Content
                     </Button>
@@ -199,7 +220,11 @@ const Dashboard = () => {
                                                             </div>
                                                         </div>
                                                         <div className="content-actions">
-                                                            <button className="btn-icon" aria-label="Edit">
+                                                            <button
+                                                                className="btn-icon"
+                                                                aria-label="Edit"
+                                                                onClick={() => navigate('/planner', { state: { editContentId: video.id } })}
+                                                            >
                                                                 <span className="material-icons">edit</span>
                                                             </button>
                                                         </div>
@@ -212,7 +237,7 @@ const Dashboard = () => {
                                                         variant="outline"
                                                         size="small"
                                                         icon="add"
-                                                        onClick={() => {/* Open modal to create new content */ }}
+                                                        onClick={() => handleQuickAction('contentPlan')}
                                                     >
                                                         Schedule a video
                                                     </Button>
@@ -355,7 +380,7 @@ const Dashboard = () => {
                                 icon="add_task"
                                 className="action-btn"
                                 fullWidth
-                                onClick={() => {/* Open new content plan modal */ }}
+                                onClick={() => handleQuickAction('contentPlan')}
                             >
                                 New Content Plan
                             </Button>
@@ -365,7 +390,7 @@ const Dashboard = () => {
                                 icon="note_add"
                                 className="action-btn"
                                 fullWidth
-                                onClick={() => {/* Open new research note modal */ }}
+                                onClick={() => handleQuickAction('researchNote')}
                             >
                                 Add Research Note
                             </Button>
@@ -375,7 +400,7 @@ const Dashboard = () => {
                                 icon="edit_note"
                                 className="action-btn"
                                 fullWidth
-                                onClick={() => {/* Navigate to script editor */ }}
+                                onClick={() => handleQuickAction('script')}
                             >
                                 Create Script
                             </Button>

@@ -9,7 +9,7 @@ interface TopBarProps {
     isSidebarCollapsed: boolean;
 }
 
-const TopBar = ({ toggleMobileNav, toggleSidebarCollapse, isSidebarCollapsed }: TopBarProps) => {
+const TopBar = ({ }: TopBarProps) => {
     const navigate = useNavigate();
     const { theme, setTheme, searchQuery, setSearchQuery } = useAppContext();
     const [isSearchActive, setIsSearchActive] = useState(false);
@@ -57,34 +57,9 @@ const TopBar = ({ toggleMobileNav, toggleSidebarCollapse, isSidebarCollapsed }: 
         }
     };
 
-    // Recently viewed or created content (mock data)
-    const recentItems = [
-        { id: '1', title: 'Electoral Reform', type: 'script', path: '/script' },
-        { id: '2', title: 'Climate Policy Research', type: 'research', path: '/research' },
-        { id: '3', title: 'Voting Rights', type: 'content', path: '/planner' },
-    ];
-
     return (
         <header className="topbar">
             <div className="topbar-left">
-                <button
-                    className="mobile-sidebar-toggle"
-                    onClick={toggleMobileNav}
-                    aria-label="Toggle menu"
-                >
-                    <span className="material-icons">menu</span>
-                </button>
-
-                <button
-                    className="sidebar-toggle-btn"
-                    onClick={toggleSidebarCollapse}
-                    aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                >
-                    <span className="material-icons">
-                        {isSidebarCollapsed ? 'menu_open' : 'menu'}
-                    </span>
-                </button>
-
                 <div className="search-container">
                     <form onSubmit={handleSearchSubmit}>
                         {isSearchActive ? (
@@ -111,22 +86,6 @@ const TopBar = ({ toggleMobileNav, toggleSidebarCollapse, isSidebarCollapsed }: 
                             </button>
                         )}
                     </form>
-                </div>
-
-                <div className="quick-nav">
-                    {recentItems.map(item => (
-                        <button
-                            key={item.id}
-                            className="quick-nav-item"
-                            onClick={() => navigate(item.path)}
-                        >
-                            <span className="material-icons">
-                                {item.type === 'script' ? 'description' :
-                                    item.type === 'research' ? 'book' : 'video_library'}
-                            </span>
-                            <span>{item.title}</span>
-                        </button>
-                    ))}
                 </div>
             </div>
 

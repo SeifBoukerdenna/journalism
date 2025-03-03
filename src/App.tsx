@@ -17,6 +17,7 @@ import { initializeDummyData } from './utils/dummyData';
 import './App.css';
 import './styles/enhanced-script-editor.css';
 import './styles/content-planner.css';
+import './styles/topbar.css';
 
 function App() {
   const { theme, setTheme } = useAppContext();
