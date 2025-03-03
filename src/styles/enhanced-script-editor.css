@@ -13,10 +13,12 @@
     font-family: 'Inter', sans-serif;
     font-size: 1rem;
     line-height: 1.8;
-    min-height: 300px;
-    /* Set minimum height */
-    min-width: 300px;
-    /* Set minimum width */
+    min-height: 400px;
+    /* Increased minimum height */
+    min-width: 600px;
+    /* Increased minimum width */
+    width: 100%;
+    /* Take full available width */
     outline: none;
     box-shadow: none;
     border-radius: 0;
@@ -26,9 +28,12 @@
 
 /* Enhanced word processor look */
 .script-textarea {
-    max-width: 800px;
+    max-width: none;
+    /* Remove max-width limitation */
+    width: 100%;
+    /* Use full width of container */
     margin: 0 auto;
-    min-height: 300px;
+    min-height: 400px;
     padding: 40px;
     background-color: white;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -47,10 +52,13 @@
     align-items: center;
     padding: 20px;
     position: relative;
-    overflow: auto;
+    overflow: visible;
+    /* Changed from auto to prevent scrollbars */
     min-height: 400px;
     height: calc(100vh - 300px);
     /* Allow container to expand with viewport */
+    width: 100%;
+    /* Use full width */
 }
 
 /* Word count and toolbar */
@@ -61,6 +69,10 @@
     background-color: var(--card-bg-color);
     border-bottom: 1px solid var(--border-color);
     gap: 12px;
+    width: 100%;
+    /* Ensure toolbar takes full width */
+    overflow-x: auto;
+    /* Allow scrolling in toolbar if needed */
 }
 
 .toolbar-group {
@@ -69,6 +81,8 @@
     gap: 4px;
     padding: 0 8px;
     border-right: 1px solid var(--border-color);
+    flex-shrink: 0;
+    /* Prevent shrinking */
 }
 
 .toolbar-group:last-child {
@@ -87,6 +101,8 @@
     color: var(--text-color);
     cursor: pointer;
     transition: background-color 0.2s ease;
+    flex-shrink: 0;
+    /* Prevent shrinking */
 }
 
 .toolbar-btn:hover {
@@ -176,4 +192,600 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    /* Take full width */
+}
+
+/* Improve tabs overflow handling */
+.tabs-scroll {
+    display: flex;
+    overflow-x: auto;
+    padding: 0 16px;
+}
+
+/* Make editor take full width of the screen */
+.editor-container {
+    width: 100%;
+}
+
+.script-editor {
+    width: 100%;
+}
+
+.editor-body {
+    width: 100%;
+}
+
+.tabs-content {
+    width: 100%;
+}
+
+.editor-tabs {
+    width: 100%;
+}
+
+/* Better responsive behavior */
+.script-content {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+}
+
+.scripts-sidebar {
+    flex: 0 0 280px;
+    /* Fixed width but doesn't grow */
+    min-width: 280px;
+}
+
+@media (max-width: 768px) {
+    .script-content {
+        flex-direction: column;
+    }
+
+    .scripts-sidebar {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .script-textarea,
+    .notes-textarea {
+        min-width: 100%;
+        width: 100%;
+    }
+}
+
+
+/* Additional CSS for src/styles/enhanced-script-editor.css */
+
+/* Improve overall script editor layout */
+.script-editor-container {
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+}
+
+/* Make the editor content area use all available space */
+.script-content {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+}
+
+/* Main editor area */
+.editor-container {
+    width: 100%;
+    min-width: 0;
+    /* Very important for preventing overflow */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Script editor */
+.script-editor {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    /* Prevent horizontal overflow */
+}
+
+/* Adjust editor header to prevent overflow */
+.editor-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+/* Make sure the textarea takes the full width of its container */
+.script-textarea-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    /* Prevent horizontal scrolling */
+}
+
+.script-textarea {
+    width: 100%;
+    max-width: none;
+    /* Remove max-width */
+}
+
+/* Improve tab navigation */
+.sections-tabs {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+/* Tabs container */
+.editor-tabs {
+    width: 100%;
+    min-width: 0;
+    /* Prevent overflow */
+}
+
+/* For mobile view, stack the layout vertically */
+@media (max-width: 1024px) {
+    .script-content {
+        grid-template-columns: 1fr;
+    }
+
+    .scripts-sidebar {
+        width: 100%;
+    }
+}
+
+/* Ensure textarea stays within bounds */
+.script-textarea,
+.notes-textarea {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+/* Fix the tab content to take full width */
+.tabs-content {
+    width: 100%;
+    min-width: 0;
+    /* Critical for preventing overflow */
+}
+
+/* Make section editor fill the available space */
+.section-editor {
+    width: 100%;
+    min-width: 0;
+    /* Prevent overflow */
+}
+
+/* Additional CSS for src/styles/enhanced-script-editor.css */
+
+/* Make textarea more spacious */
+.script-textarea {
+    padding: 40px 60px;
+    /* Wider padding for more comfortable reading */
+    font-size: 16px;
+    /* Slightly larger font */
+    line-height: 1.8;
+    width: 100%;
+    max-width: 100%;
+    border: none;
+    box-sizing: border-box;
+    min-height: 500px;
+    /* Taller default height */
+}
+
+/* Change paper style */
+.script-textarea-container {
+    padding: 0;
+    background-color: var(--bg-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    /* Prevent overflow */
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 500px;
+}
+
+/* Apply a subtle paper effect */
+.script-textarea {
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    width: 100%;
+    margin: 0;
+}
+
+.dark .script-textarea {
+    background-color: #1a1c23;
+}
+
+/* Enhance the resize handle */
+.script-textarea {
+    resize: both;
+}
+
+/* Better handle the container to prevent horizontal scrolling */
+.tabs-content {
+    display: flex;
+    overflow: hidden;
+    width: 100%;
+}
+
+/* Provide more visual space between sidebar and editor */
+.script-content {
+    gap: 24px;
+}
+
+/* Ensure the textarea doesn't cause horizontal scrolling */
+.script-textarea-container,
+.notes-textarea-container {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+
+/* Make sure textarea resizing doesn't break layout */
+.script-textarea,
+.notes-textarea {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Increase tab height for better clickability */
+.section-tab {
+    padding: 14px 20px;
+    font-size: 15px;
+}
+
+/* Improve the section tab scrolling */
+.tabs-scroll {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: -1px;
+    /* Align with the border */
+}
+
+/* Custom scrollbar for better visibility */
+.tabs-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.tabs-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tabs-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.dark .tabs-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* src/styles/enhanced-script-editor.css */
+
+/* Enhanced Script Editor Styles */
+.script-textarea,
+.notes-textarea {
+    flex: 1;
+    padding: 40px 60px;
+    /* Wider padding for more comfortable reading */
+    border: none;
+    resize: both;
+    /* Make textarea resizable in both directions */
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    /* Slightly larger font */
+    line-height: 1.8;
+    min-height: 500px;
+    /* Taller default height */
+    min-width: 600px;
+    /* Increased minimum width */
+    width: 100%;
+    /* Take full available width */
+    outline: none;
+    box-shadow: none;
+    border-radius: 4px;
+    overflow-y: auto;
+    transition: all 0.2s ease;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Enhanced word processor look */
+.script-textarea {
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+}
+
+.dark .script-textarea {
+    background-color: #1a1c23;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Simulating paper with a subtle shadow */
+.script-textarea-container {
+    background-color: var(--bg-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    /* Prevent overflow */
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 500px;
+}
+
+/* Word count and toolbar */
+.editor-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: var(--card-bg-color);
+    border-bottom: 1px solid var(--border-color);
+    gap: 12px;
+    width: 100%;
+    /* Ensure toolbar takes full width */
+    overflow-x: auto;
+    /* Allow scrolling in toolbar if needed */
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    border-right: 1px solid var(--border-color);
+    flex-shrink: 0;
+    /* Prevent shrinking */
+}
+
+.toolbar-group:last-child {
+    border-right: none;
+}
+
+.toolbar-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+    /* Prevent shrinking */
+}
+
+.toolbar-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark .toolbar-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.toolbar-btn.active {
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--primary-color);
+}
+
+.word-count-indicator {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background-color: var(--card-bg-color);
+    color: var(--text-light);
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 5;
+}
+
+.word-count-indicator .material-icons {
+    font-size: 16px;
+}
+
+.section-duration-indicator {
+    margin-left: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Cursor enhancement and line height for better editing */
+.script-textarea:focus {
+    caret-color: var(--primary-color);
+}
+
+/* Make the section tabs more obvious */
+.section-tab {
+    padding: 14px 20px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+    white-space: nowrap;
+    font-size: 15px;
+}
+
+.section-tab.active {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.section-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--primary-color);
+}
+
+/* Placeholder text styling */
+.script-textarea::placeholder {
+    color: var(--text-light);
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Adding some vertical spacing for paragraph separation */
+.script-textarea {
+    white-space: pre-wrap;
+}
+
+/* Style adjustments for better editing experience */
+.section-editor {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    /* Take full width */
+    min-width: 0;
+    /* Prevent overflow */
+}
+
+/* Improve tabs overflow handling */
+.tabs-scroll {
+    display: flex;
+    overflow-x: auto;
+    padding: 0 16px;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: -1px;
+}
+
+/* Custom scrollbar for better visibility */
+.tabs-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.tabs-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tabs-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.dark .tabs-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Improve overall script editor layout */
+.script-editor-container {
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+}
+
+/* Make the editor content area use all available space */
+.script-content {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+}
+
+/* Main editor area */
+.editor-container {
+    width: 100%;
+    min-width: 0;
+    /* Very important for preventing overflow */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Script editor */
+.script-editor {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    /* Prevent horizontal overflow */
+}
+
+/* Adjust editor header to prevent overflow */
+.editor-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+/* Make sure the textarea takes the full width of its container */
+.script-textarea-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Tabs container */
+.editor-tabs {
+    width: 100%;
+    min-width: 0;
+    /* Prevent overflow */
+}
+
+/* Fix the tab content to take full width */
+.tabs-content {
+    width: 100%;
+    min-width: 0;
+    /* Critical for preventing overflow */
+    display: flex;
+    overflow: hidden;
+}
+
+/* For mobile view, stack the layout vertically */
+@media (max-width: 1024px) {
+    .script-content {
+        grid-template-columns: 1fr;
+    }
+
+    .scripts-sidebar {
+        width: 100%;
+    }
+
+    .script-textarea,
+    .notes-textarea {
+        min-width: 100%;
+        padding: 20px;
+    }
 }

@@ -1,6 +1,7 @@
 // src/components/enhanced/EnhancedScriptEditor.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import Tabs from '../common/Tabs';
+import '../../styles/enhanced-script-editor.css';
 
 interface ScriptSection {
     id: string;
