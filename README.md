@@ -1,55 +1,80 @@
-# React + TypeScript + Vite
+# Content Studio - Professional Script Editor for Content Creators
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Content Studio is a comprehensive application designed for political and social commentary content creators. It helps you organize research, plan content, write scripts, and track your production workflow in one unified platform.
 
-Currently, two official plugins are available:
+## Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Research Hub**: Organize topics and research notes
+- **Content Planner**: Schedule and track content projects with Kanban board
+- **Script Editor**: Write and edit scripts with professional formatting tools
+- **Statistics Tracking**: Word count and estimated speaking duration
+- **Auto-save**: Never lose your work
 
-## Expanding the ESLint configuration
+## Application Structure
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+The application consists of four main sections:
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+1. **Dashboard**: Overview of upcoming content, analytics, and quick access
+2. **Research Hub**: Organize topics and research notes
+3. **Content Planner**: Schedule and manage content production
+4. **Script Editor**: Write and format scripts for your videos
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Using the Script Editor
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The Script Editor has been enhanced to provide a more professional word processor experience:
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
-# journalism
+- **Format toolbar**: Add bold/italic text and special script elements
+- **Section management**: Organize scripts into logical sections
+- **Real-time statistics**: Track word count and estimated speaking time
+- **Resizable editor**: Adjust the size of the text area to your preference
+- **Dark mode support**: Easy on the eyes for late-night writing sessions
+
+### Special Features
+
+- **Formatting tools**: Use the toolbar to add bold or italic text
+- **Script elements**: Easily insert camera directions, action notes, transitions
+- **Multiple sections**: Organize your content into logical segments
+- **Auto-save**: Changes are saved automatically while you work
+
+### Keyboard Shortcuts
+
+- `Ctrl+S`: Save current script
+- `Ctrl+B`: Bold selected text
+- `Ctrl+I`: Italic selected text
+- `Ctrl+/`: Open keyboard shortcuts help
+
+## Demo Data
+
+The application comes pre-loaded with sample data to help you understand its features:
+
+- **Topics**: Electoral Reform, Climate Policy, Healthcare Systems, Economic Inequality, etc.
+- **Research Notes**: Sample notes on various political and social topics
+- **Content Plans**: Example content projects in different stages of production
+- **Scripts**: Complete sample scripts to demonstrate the editor's capabilities
+
+## Getting Started
+
+1. Explore the different sections using the sidebar navigation
+2. Check out the sample scripts in the Script Editor
+3. Try creating a new script or editing an existing one
+4. Use the toolbar to format your text and add script elements
+5. Resize the text area to your preferred dimensions
+
+## Technical Details
+
+The application is built with:
+
+- React and TypeScript for the frontend
+- Local storage for data persistence (in a production app, this would be a backend database)
+- Material Icons for visual elements
+- CSS custom properties for theming support
+
+## Customization
+
+You can customize your experience through:
+
+- **Settings page**: Adjust preferences and app behavior
+- **Theme toggle**: Switch between light and dark modes
+- **Editor preferences**: Modify auto-save settings and editor behavior
+
+Enjoy creating content with Content Studio!

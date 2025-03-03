@@ -5,11 +5,14 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import EmptyState from '../components/common/EmptyState';
-import Tabs from '../components/common/Tabs';
 import useUnsavedChanges from '../hooks/useUnsavedChanges';
 import { useModal } from '../hooks/useModal';
 import ConfirmationDialog from '../components/common/ConfirmationDialog';
 import { showSuccessToast, showErrorToast } from '../utils/toastService';
+import EnhancedScriptEditor from '../components/enhanced/EnhancedScriptEditor';
+
+// Import the script editor styles
+import '../styles/enhanced-script-editor.css';
 
 interface ScriptFormData {
     title: string;
@@ -136,7 +139,6 @@ const ScriptEditor = () => {
         return !scripts.some(s => s.contentPlanId === plan.id);
     });
 
-
     // Reset form data when modal closes
     useEffect(() => {
         if (!isScriptModalOpen) {
@@ -170,7 +172,6 @@ const ScriptEditor = () => {
             }
         }
     }, [selectedScriptId, isScriptModalOpen, scripts]);
-
 
     // Calculate script statistics when the current script or active section changes
     useEffect(() => {
@@ -250,7 +251,7 @@ const ScriptEditor = () => {
                 updateScript(selectedScriptId, scriptFormData);
                 showSuccessToast('Script updated successfully');
             } else {
-                // Fix: Store the returned script and check if it exists before accessing the id
+                // Store the returned script and check if it exists before accessing the id
                 const newScript = addScript(scriptFormData);
                 if (newScript && newScript.id) {
                     setCurrentScriptId(newScript.id);
@@ -413,6 +414,34 @@ const ScriptEditor = () => {
         openScriptModal();
     };
 
+    // Handle section content update
+    const handleSectionContentUpdate = (content: string) => {
+        if (!currentScriptId || !currentScript) return;
+
+        updateScript(currentScriptId, {
+            ...currentScript,
+            sections: currentScript.sections.map((section, index) =>
+                index === activeSectionIndex
+                    ? { ...section, content }
+                    : section
+            )
+        });
+    };
+
+    // Handle section title update
+    const handleSectionTitleUpdate = (title: string) => {
+        if (!currentScriptId || !currentScript) return;
+
+        updateScript(currentScriptId, {
+            ...currentScript,
+            sections: currentScript.sections.map((section, index) =>
+                index === activeSectionIndex
+                    ? { ...section, title }
+                    : section
+            )
+        });
+    };
+
     return (
         <div className="script-editor-container">
             <div className="script-header">
@@ -573,165 +602,16 @@ const ScriptEditor = () => {
                                     </div>
                                 </div>
 
-                                <div className="section-editor">
-                                    <div className="section-header">
-                                        <div className="section-title-container">
-                                            <input
-                                                type="text"
-                                                className="section-title-input"
-                                                value={currentScript.sections[activeSectionIndex]?.title || ''}
-                                                onChange={(e) => {
-                                                    if (!currentScriptId) return;
-                                                    updateScript(currentScriptId, {
-                                                        ...currentScript,
-                                                        sections: currentScript.sections.map((section, index) =>
-                                                            index === activeSectionIndex // Fixed: changed activeSection to activeSectionIndex
-                                                                ? { ...section, title: e.target.value }
-                                                                : section
-                                                        )
-                                                    });
-                                                }}
-                                                placeholder="Section Title"
-                                            />
-                                            <div className="section-actions">
-                                                <button
-                                                    className="btn-icon"
-                                                    onClick={() => {
-                                                        if (currentScript.sections.length <= 1) return;
-
-                                                        const newSections = [...currentScript.sections];
-                                                        newSections.splice(activeSectionIndex, 1);
-                                                        if (!currentScriptId) return;
-                                                        updateScript(currentScriptId, {
-                                                            ...currentScript,
-                                                            sections: newSections
-                                                        });
-
-                                                        // Adjust active section index
-                                                        if (activeSectionIndex >= newSections.length) {
-                                                            setActiveSectionIndex(newSections.length - 1);
-                                                        }
-                                                    }}
-                                                    disabled={currentScript.sections.length <= 1}
-                                                    aria-label="Delete section"
-                                                >
-                                                    <span className="material-icons">delete</span>
-                                                </button>
-
-                                                <button
-                                                    className="btn-icon"
-                                                    onClick={() => {
-                                                        const newSections = [...currentScript.sections];
-
-                                                        if (activeSectionIndex > 0) {
-                                                            [newSections[activeSectionIndex], newSections[activeSectionIndex - 1]] =
-                                                                [newSections[activeSectionIndex - 1], newSections[activeSectionIndex]];
-                                                            if (!currentScriptId) return;
-
-                                                            updateScript(currentScriptId, {
-                                                                ...currentScript,
-                                                                sections: newSections
-                                                            });
-
-                                                            setActiveSectionIndex(activeSectionIndex - 1);
-                                                        }
-                                                    }}
-                                                    disabled={activeSectionIndex <= 0}
-                                                    aria-label="Move section up"
-                                                >
-                                                    <span className="material-icons">arrow_upward</span>
-                                                </button>
-
-                                                <button
-                                                    className="btn-icon"
-                                                    onClick={() => {
-                                                        const newSections = [...currentScript.sections];
-
-                                                        if (activeSectionIndex < newSections.length - 1) {
-                                                            [newSections[activeSectionIndex], newSections[activeSectionIndex + 1]] =
-                                                                [newSections[activeSectionIndex + 1], newSections[activeSectionIndex]];
-                                                            if (!currentScriptId) return;
-
-                                                            updateScript(currentScriptId, {
-                                                                ...currentScript,
-                                                                sections: newSections
-                                                            });
-
-                                                            setActiveSectionIndex(activeSectionIndex + 1);
-                                                        }
-                                                    }}
-                                                    disabled={activeSectionIndex >= currentScript.sections.length - 1}
-                                                    aria-label="Move section down"
-                                                >
-                                                    <span className="material-icons">arrow_downward</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="editor-tabs">
-                                        <Tabs
-                                            tabs={[
-                                                {
-                                                    id: 'script',
-                                                    label: 'Script',
-                                                    icon: 'description',
-                                                    content: (
-                                                        <div className="script-textarea-container">
-                                                            <textarea
-                                                                id={`section-content-${activeSectionIndex}`}
-                                                                className="script-textarea"
-                                                                value={currentScript.sections[activeSectionIndex]?.content || ''}
-                                                                onChange={(e) => {
-                                                                    const newContent = e.target.value;
-                                                                    if (!currentScriptId) return;
-
-                                                                    updateScript(currentScriptId, {
-                                                                        ...currentScript,
-                                                                        sections: currentScript.sections.map((section, index) =>
-                                                                            index === activeSectionIndex
-                                                                                ? { ...section, content: newContent }
-                                                                                : section
-                                                                        )
-                                                                    });
-                                                                    calculateSectionStats(newContent, currentScript.sections[activeSectionIndex].id);
-                                                                }}
-                                                                placeholder="Write your script here..."
-                                                            />
-                                                        </div>
-                                                    ),
-                                                },
-                                                {
-                                                    id: 'notes',
-                                                    label: 'Notes',
-                                                    icon: 'sticky_note_2',
-                                                    content: (
-                                                        <div className="notes-textarea-container">
-                                                            <textarea
-                                                                id={`section-notes-${activeSectionIndex}`}
-                                                                className="notes-textarea"
-                                                                value={currentScript.sections[activeSectionIndex]?.notes || ''}
-                                                                onChange={(e) => {
-                                                                    if (!currentScriptId) return;
-
-                                                                    updateScript(currentScriptId, {
-                                                                        ...currentScript,
-                                                                        sections: currentScript.sections.map((section, index) =>
-                                                                            index === activeSectionIndex
-                                                                                ? { ...section, notes: e.target.value }
-                                                                                : section
-                                                                        )
-                                                                    });
-                                                                }}
-                                                                placeholder="Add additional notes, camera directions, or visual cues here..."
-                                                            />
-                                                        </div>
-                                                    ),
-                                                },
-                                            ]}
-                                        />
-                                    </div>
-                                </div>
+                                {/* Enhanced Script Editor Component */}
+                                {currentScript.sections[activeSectionIndex] && (
+                                    <EnhancedScriptEditor
+                                        section={currentScript.sections[activeSectionIndex]}
+                                        activeSectionIndex={activeSectionIndex}
+                                        onChange={handleSectionContentUpdate}
+                                        onTitleChange={handleSectionTitleUpdate}
+                                        onCalculateDuration={calculateSectionStats}
+                                    />
+                                )}
                             </div>
                         </div>
                     ) : (

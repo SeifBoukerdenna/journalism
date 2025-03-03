@@ -5,9 +5,11 @@ import { useAppContext } from '../../contexts/AppContext';
 
 interface TopBarProps {
     toggleMobileNav: () => void;
+    toggleSidebarCollapse: () => void;
+    isSidebarCollapsed: boolean;
 }
 
-const TopBar = ({ toggleMobileNav }: TopBarProps) => {
+const TopBar = ({ toggleMobileNav, toggleSidebarCollapse, isSidebarCollapsed }: TopBarProps) => {
     const navigate = useNavigate();
     const { theme, setTheme, searchQuery, setSearchQuery } = useAppContext();
     const [isSearchActive, setIsSearchActive] = useState(false);
@@ -71,6 +73,16 @@ const TopBar = ({ toggleMobileNav }: TopBarProps) => {
                     aria-label="Toggle menu"
                 >
                     <span className="material-icons">menu</span>
+                </button>
+
+                <button
+                    className="sidebar-toggle-btn"
+                    onClick={toggleSidebarCollapse}
+                    aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    <span className="material-icons">
+                        {isSidebarCollapsed ? 'menu_open' : 'menu'}
+                    </span>
                 </button>
 
                 <div className="search-container">

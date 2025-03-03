@@ -11,18 +11,34 @@ import Settings from './pages/Settings';
 import KeyboardShortcutsHelp from './components/common/KeyboardShortcutsHelp';
 import { useAppContext } from './contexts/AppContext';
 import { showSuccessToast } from './utils/toastService';
-import './App.css'; // Main app styles
-import './enhanced-styles.css'; // Enhanced styles
+import { initializeDummyData } from './utils/dummyData';
 
+// Import CSS files
+import './App.css';
+import './styles/enhanced-script-editor.css';
+import './styles/content-planner.css';
 
 function App() {
-  const { theme } = useAppContext();
+  const { theme, setTheme } = useAppContext();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isAppLoaded, setIsAppLoaded] = useState(false);
   const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Simulate app loading
+  // Apply theme class to body
   useEffect(() => {
+    document.body.className = theme;
+  }, [theme]);
+
+  // Initialize dummy data and simulate app loading
+  useEffect(() => {
+    // Force initialization of dummy data every time for testing
+    localStorage.removeItem('hasInitializedDummyData');
+
+    // Initialize dummy data
+    initializeDummyData();
+
+    // Simulate loading
     const timer = setTimeout(() => {
       setIsAppLoaded(true);
       // Show welcome toast after loading
@@ -32,7 +48,7 @@ function App() {
           duration: 3000
         });
       }, 1000);
-    }, 1000);
+    }, 2000); // Longer loading time to see the animation
 
     return () => clearTimeout(timer);
   }, []);
@@ -65,6 +81,24 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Create toast container for notifications
+  useEffect(() => {
+    // Check if toast container exists, create if not
+    if (!document.getElementById('toast-container')) {
+      const toastContainer = document.createElement('div');
+      toastContainer.id = 'toast-container';
+      toastContainer.className = 'toast-container';
+      document.body.appendChild(toastContainer);
+    }
+
+    return () => {
+      const container = document.getElementById('toast-container');
+      if (container) {
+        document.body.removeChild(container);
+      }
+    };
+  }, []);
+
   // Handle errors
   const [hasError, setHasError] = useState(false);
 
@@ -78,9 +112,13 @@ function App() {
     return () => window.removeEventListener('error', handleError);
   }, []);
 
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   if (hasError) {
     return (
-      <div className="error-container">
+      <div className={`error-container ${theme}`}>
         <div className="error-content">
           <div className="error-icon">
             <span className="material-icons">error</span>
@@ -117,12 +155,16 @@ function App() {
       <div className={`app-container ${theme}`}>
         <Sidebar
           isMobileOpen={isMobileNavOpen}
+          isCollapsed={isSidebarCollapsed}
+          toggleCollapse={toggleSidebarCollapse}
           toggleMobileNav={() => setIsMobileNavOpen(!isMobileNavOpen)}
         />
 
-        <div className="main-content">
+        <div className={`main-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
           <TopBar
             toggleMobileNav={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            toggleSidebarCollapse={toggleSidebarCollapse}
+            isSidebarCollapsed={isSidebarCollapsed}
           />
 
           <div className="page-container">
@@ -155,9 +197,6 @@ function App() {
           isOpen={isShortcutsHelpOpen}
           onClose={() => setIsShortcutsHelpOpen(false)}
         />
-
-        {/* Toast notifications container */}
-        <div id="toast-container" className="toast-container"></div>
       </div>
     </Router>
   );

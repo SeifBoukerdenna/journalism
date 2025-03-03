@@ -1,18 +1,19 @@
 // src/components/common/Sidebar.tsx
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../contexts/AppContext';
 
 interface SidebarProps {
     isMobileOpen: boolean;
+    isCollapsed: boolean;
+    toggleCollapse: () => void;
     toggleMobileNav: () => void;
 }
 
-const Sidebar = ({ isMobileOpen, toggleMobileNav }: SidebarProps) => {
+const Sidebar = ({ isMobileOpen, isCollapsed, toggleCollapse, toggleMobileNav }: SidebarProps) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { contentPlans, theme, setTheme } = useAppContext();
-    const [isCollapsed, setIsCollapsed] = useState(false);
 
     // Count upcoming videos (scheduled in the next 7 days)
     const upcomingVideos = contentPlans.filter(plan => {
@@ -39,18 +40,6 @@ const Sidebar = ({ isMobileOpen, toggleMobileNav }: SidebarProps) => {
         }
     }, [location.pathname]);
 
-    // Add event listener for screen resize
-    useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth < 768) {
-                setIsCollapsed(false);
-            }
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
     const handleCreateContent = () => {
         // Navigate to content planner and open the modal
         navigate('/planner', { state: { openContentModal: true } });
@@ -75,7 +64,7 @@ const Sidebar = ({ isMobileOpen, toggleMobileNav }: SidebarProps) => {
                     {!isCollapsed && <h2>Content Studio</h2>}
                     <button
                         className="sidebar-collapse-btn"
-                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        onClick={toggleCollapse}
                         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                     >
                         <span className="material-icons">
