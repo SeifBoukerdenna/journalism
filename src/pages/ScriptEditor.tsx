@@ -10,9 +10,11 @@ import { useModal } from '../hooks/useModal';
 import ConfirmationDialog from '../components/common/ConfirmationDialog';
 import { showSuccessToast, showErrorToast } from '../utils/toastService';
 import EnhancedScriptEditor from '../components/enhanced/EnhancedScriptEditor';
+import ScriptPreview from '../components/enhanced/ScriptPreview';
 
 // Import the script editor styles
 import '../styles/enhanced-script-editor.css';
+import '../styles/script-preview.css';
 
 interface ScriptFormData {
     title: string;
@@ -52,6 +54,9 @@ const ScriptEditor = () => {
         characterCount: 0,
         estimatedDuration: '0:00'
     });
+
+    // Preview modal state
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     // Unsaved changes tracking
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -245,7 +250,6 @@ const ScriptEditor = () => {
     // Handle form submission
     const handleScriptSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
         try {
             if (selectedScriptId) {
                 updateScript(selectedScriptId, scriptFormData);
@@ -442,6 +446,19 @@ const ScriptEditor = () => {
         });
     };
 
+    // Function to handle opening the preview
+    const handleOpenPreview = () => {
+        if (currentScriptId && currentScript) {
+            // Save the current state before previewing
+            if (hasUnsavedChanges) {
+                saveCurrentScript();
+            }
+            setIsPreviewOpen(true);
+        } else {
+            showErrorToast('Please select or create a script first');
+        }
+    };
+
     return (
         <div className="script-editor-container">
             <div className="script-header">
@@ -550,6 +567,16 @@ const ScriptEditor = () => {
                                             <span className="saved">Last saved: {formatLastSaved(lastSaved)}</span>
                                         </span>
                                     )}
+
+                                    {/* Preview & Export Button */}
+                                    <Button
+                                        variant="outline"
+                                        icon="visibility"
+                                        onClick={handleOpenPreview}
+                                    >
+                                        Preview & Export
+                                    </Button>
+
                                     <Button
                                         variant="primary"
                                         onClick={saveCurrentScript}
@@ -753,6 +780,19 @@ const ScriptEditor = () => {
                         </div>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Script Preview Modal */}
+            <Modal
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                title=""
+                size="full"
+            >
+                <ScriptPreview
+                    script={currentScript}
+                    onClose={() => setIsPreviewOpen(false)}
+                />
             </Modal>
 
             {/* Unsaved Changes Confirmation Dialog */}
