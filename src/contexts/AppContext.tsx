@@ -1,5 +1,8 @@
 // src/contexts/AppContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import * as firebaseService from '../firebase/firebaseService';
+import { initializeFirebaseData } from '../firebase/initializeFirebaseData';
+import { showSuccessToast, showErrorToast } from '../utils/toastService';
 
 interface Topic {
     id: string;
@@ -31,6 +34,14 @@ interface ContentPlan {
     updatedAt: Date;
 }
 
+interface ScriptSection {
+    id: string;
+    title: string;
+    content: string;
+    notes?: string;
+    duration?: number;
+}
+
 interface Script {
     id: string;
     contentPlanId: string;
@@ -40,35 +51,28 @@ interface Script {
     updatedAt: Date;
 }
 
-interface ScriptSection {
-    id: string;
-    title: string;
-    content: string;
-    notes?: string;
-    duration?: number;
-}
-
 interface AppContextType {
     theme: 'light' | 'dark';
     setTheme: (theme: 'light' | 'dark') => void;
     topics: Topic[];
-    addTopic: (topic: Omit<Topic, 'id' | 'createdAt' | 'updatedAt'>) => void;
-    updateTopic: (id: string, topic: Partial<Topic>) => void;
-    deleteTopic: (id: string) => void;
+    addTopic: (topic: Omit<Topic, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+    updateTopic: (id: string, topic: Partial<Topic>) => Promise<void>;
+    deleteTopic: (id: string) => Promise<void>;
     researchNotes: ResearchNote[];
-    addResearchNote: (note: Omit<ResearchNote, 'id' | 'createdAt' | 'updatedAt'>) => void;
-    updateResearchNote: (id: string, note: Partial<ResearchNote>) => void;
-    deleteResearchNote: (id: string) => void;
+    addResearchNote: (note: Omit<ResearchNote, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+    updateResearchNote: (id: string, note: Partial<ResearchNote>) => Promise<void>;
+    deleteResearchNote: (id: string) => Promise<void>;
     contentPlans: ContentPlan[];
-    addContentPlan: (plan: Omit<ContentPlan, 'id' | 'createdAt' | 'updatedAt'>) => void;
-    updateContentPlan: (id: string, plan: Partial<ContentPlan>) => void;
-    deleteContentPlan: (id: string) => void;
+    addContentPlan: (plan: Omit<ContentPlan, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+    updateContentPlan: (id: string, plan: Partial<ContentPlan>) => Promise<void>;
+    deleteContentPlan: (id: string) => Promise<void>;
     scripts: Script[];
-    addScript: (script: Omit<Script, 'id' | 'createdAt' | 'updatedAt'>) => Script;
-    updateScript: (id: string, script: Partial<Script>) => void;
-    deleteScript: (id: string) => void;
+    addScript: (script: Omit<Script, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Script>;
+    updateScript: (id: string, script: Partial<Script>, options?: { showToast?: boolean }) => Promise<void>;
+    deleteScript: (id: string) => Promise<void>;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
+    isLoading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -96,114 +100,242 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     const [contentPlans, setContentPlans] = useState<ContentPlan[]>([]);
     const [scripts, setScripts] = useState<Script[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Load data from localStorage on initial load
-    useEffect(() => {
-        try {
-            const savedTopics = localStorage.getItem('topics');
-            const savedNotes = localStorage.getItem('researchNotes');
-            const savedPlans = localStorage.getItem('contentPlans');
-            const savedScripts = localStorage.getItem('scripts');
-
-            if (savedTopics) setTopics(JSON.parse(savedTopics));
-            if (savedNotes) setResearchNotes(JSON.parse(savedNotes));
-            if (savedPlans) setContentPlans(JSON.parse(savedPlans));
-            if (savedScripts) setScripts(JSON.parse(savedScripts));
-        } catch (error) {
-            console.error('Error loading data from localStorage:', error);
-        }
-    }, []);
-
-    // Save data to localStorage whenever it changes
+    // Save theme to localStorage
     useEffect(() => {
         localStorage.setItem('theme', theme);
-        localStorage.setItem('topics', JSON.stringify(topics));
-        localStorage.setItem('researchNotes', JSON.stringify(researchNotes));
-        localStorage.setItem('contentPlans', JSON.stringify(contentPlans));
-        localStorage.setItem('scripts', JSON.stringify(scripts));
-    }, [theme, topics, researchNotes, contentPlans, scripts]);
+        // Save theme preference to Firebase
+        firebaseService.saveUserSettings({ theme })
+            .catch(error => console.error('Error saving theme preference:', error));
+    }, [theme]);
 
-    // Helper functions for CRUD operations
-    const addTopic = (topic: Omit<Topic, 'id' | 'createdAt' | 'updatedAt'>) => {
-        const newTopic: Topic = {
-            ...topic,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            updatedAt: new Date()
+    // Load data from Firebase on initial load
+    useEffect(() => {
+        const loadData = async () => {
+            setIsLoading(true);
+            try {
+                // Initialize Firebase with sample data if collections are empty
+                await initializeFirebaseData();
+
+                // Load user settings first
+                const settings = await firebaseService.getUserSettings();
+                if (settings && settings.theme) {
+                    setTheme(settings.theme);
+                }
+
+                // Load all data in parallel
+                const [topicsData, notesData, plansData, scriptsData] = await Promise.all([
+                    firebaseService.getTopics(),
+                    firebaseService.getResearchNotes(),
+                    firebaseService.getContentPlans(),
+                    firebaseService.getScripts()
+                ]);
+
+                setTopics(topicsData as Topic[]);
+                setResearchNotes(notesData as ResearchNote[]);
+                setContentPlans(plansData as ContentPlan[]);
+                setScripts(scriptsData as Script[]);
+            } catch (error) {
+                console.error('Error loading data from Firebase:', error);
+                showErrorToast('Failed to load data from the database');
+
+                // Fall back to localStorage
+                try {
+                    const savedTopics = localStorage.getItem('topics');
+                    const savedNotes = localStorage.getItem('researchNotes');
+                    const savedPlans = localStorage.getItem('contentPlans');
+                    const savedScripts = localStorage.getItem('scripts');
+
+                    if (savedTopics) setTopics(JSON.parse(savedTopics));
+                    if (savedNotes) setResearchNotes(JSON.parse(savedNotes));
+                    if (savedPlans) setContentPlans(JSON.parse(savedPlans));
+                    if (savedScripts) setScripts(JSON.parse(savedScripts));
+
+                    showSuccessToast('Loaded data from local storage instead');
+                } catch (localStorageError) {
+                    console.error('Local storage fallback failed:', localStorageError);
+                }
+            } finally {
+                setIsLoading(false);
+            }
         };
-        setTopics(prev => [...prev, newTopic]);
+
+        loadData();
+    }, []);
+
+    // Functions for topics CRUD operations
+    const addTopic = async (topic: Omit<Topic, 'id' | 'createdAt' | 'updatedAt'>) => {
+        try {
+            const newTopic = await firebaseService.addTopic(topic) as Topic;
+            setTopics(prev => [newTopic, ...prev]);
+            showSuccessToast('Topic created successfully');
+        } catch (error) {
+            console.error('Error adding topic:', error);
+            showErrorToast('Failed to create topic');
+            throw error;
+        }
     };
 
-    const updateTopic = (id: string, topic: Partial<Topic>) => {
-        setTopics(prev =>
-            prev.map(t => t.id === id ? { ...t, ...topic, updatedAt: new Date() } : t)
-        );
+    const updateTopic = async (id: string, topic: Partial<Topic>) => {
+        try {
+            await firebaseService.updateTopic(id, topic);
+            setTopics(prev =>
+                prev.map(t => t.id === id ? { ...t, ...topic, updatedAt: new Date() } : t)
+            );
+            showSuccessToast('Topic updated successfully');
+        } catch (error) {
+            console.error('Error updating topic:', error);
+            showErrorToast('Failed to update topic');
+            throw error;
+        }
     };
 
-    const deleteTopic = (id: string) => {
-        setTopics(prev => prev.filter(t => t.id !== id));
+    const deleteTopic = async (id: string) => {
+        try {
+            await firebaseService.deleteTopic(id);
+
+            // Also delete related research notes
+            const relatedNotes = researchNotes.filter(note => note.topicId === id);
+            for (const note of relatedNotes) {
+                await firebaseService.deleteResearchNote(note.id);
+            }
+
+            setTopics(prev => prev.filter(t => t.id !== id));
+            setResearchNotes(prev => prev.filter(note => note.topicId !== id));
+            showSuccessToast('Topic deleted successfully');
+        } catch (error) {
+            console.error('Error deleting topic:', error);
+            showErrorToast('Failed to delete topic');
+            throw error;
+        }
     };
 
-    const addResearchNote = (note: Omit<ResearchNote, 'id' | 'createdAt' | 'updatedAt'>) => {
-        const newNote: ResearchNote = {
-            ...note,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
-        setResearchNotes(prev => [...prev, newNote]);
+    // Functions for research notes CRUD operations
+    const addResearchNote = async (note: Omit<ResearchNote, 'id' | 'createdAt' | 'updatedAt'>) => {
+        try {
+            const newNote = await firebaseService.addResearchNote(note) as ResearchNote;
+            setResearchNotes(prev => [newNote, ...prev]);
+            showSuccessToast('Research note added successfully');
+        } catch (error) {
+            console.error('Error adding research note:', error);
+            showErrorToast('Failed to add research note');
+            throw error;
+        }
     };
 
-    const updateResearchNote = (id: string, note: Partial<ResearchNote>) => {
-        setResearchNotes(prev =>
-            prev.map(n => n.id === id ? { ...n, ...note, updatedAt: new Date() } : n)
-        );
+    const updateResearchNote = async (id: string, note: Partial<ResearchNote>) => {
+        try {
+            await firebaseService.updateResearchNote(id, note);
+            setResearchNotes(prev =>
+                prev.map(n => n.id === id ? { ...n, ...note, updatedAt: new Date() } : n)
+            );
+            showSuccessToast('Research note updated successfully');
+        } catch (error) {
+            console.error('Error updating research note:', error);
+            showErrorToast('Failed to update research note');
+            throw error;
+        }
     };
 
-    const deleteResearchNote = (id: string) => {
-        setResearchNotes(prev => prev.filter(n => n.id !== id));
+    const deleteResearchNote = async (id: string) => {
+        try {
+            await firebaseService.deleteResearchNote(id);
+            setResearchNotes(prev => prev.filter(n => n.id !== id));
+            showSuccessToast('Research note deleted successfully');
+        } catch (error) {
+            console.error('Error deleting research note:', error);
+            showErrorToast('Failed to delete research note');
+            throw error;
+        }
     };
 
-    const addContentPlan = (plan: Omit<ContentPlan, 'id' | 'createdAt' | 'updatedAt'>) => {
-        const newPlan: ContentPlan = {
-            ...plan,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
-        setContentPlans(prev => [...prev, newPlan]);
+    // Functions for content plans CRUD operations
+    const addContentPlan = async (plan: Omit<ContentPlan, 'id' | 'createdAt' | 'updatedAt'>) => {
+        try {
+            const newPlan = await firebaseService.addContentPlan(plan) as ContentPlan;
+            setContentPlans(prev => [newPlan, ...prev]);
+            showSuccessToast('Content plan created successfully');
+        } catch (error) {
+            console.error('Error adding content plan:', error);
+            showErrorToast('Failed to create content plan');
+            throw error;
+        }
     };
 
-    const updateContentPlan = (id: string, plan: Partial<ContentPlan>) => {
-        setContentPlans(prev =>
-            prev.map(p => p.id === id ? { ...p, ...plan, updatedAt: new Date() } : p)
-        );
+    const updateContentPlan = async (id: string, plan: Partial<ContentPlan>) => {
+        try {
+            await firebaseService.updateContentPlan(id, plan);
+            setContentPlans(prev =>
+                prev.map(p => p.id === id ? { ...p, ...plan, updatedAt: new Date() } : p)
+            );
+            showSuccessToast('Content plan updated successfully');
+        } catch (error) {
+            console.error('Error updating content plan:', error);
+            showErrorToast('Failed to update content plan');
+            throw error;
+        }
     };
 
-    const deleteContentPlan = (id: string) => {
-        setContentPlans(prev => prev.filter(p => p.id !== id));
+    const deleteContentPlan = async (id: string) => {
+        try {
+            await firebaseService.deleteContentPlan(id);
+            setContentPlans(prev => prev.filter(p => p.id !== id));
+            showSuccessToast('Content plan deleted successfully');
+        } catch (error) {
+            console.error('Error deleting content plan:', error);
+            showErrorToast('Failed to delete content plan');
+            throw error;
+        }
     };
 
-    const addScript = (script: Omit<Script, 'id' | 'createdAt' | 'updatedAt'>) => {
-        const newScript: Script = {
-            ...script,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
-        setScripts(prev => [...prev, newScript]);
-        return newScript; // Explicitly return the newly created script
+    // Functions for scripts CRUD operations
+    const addScript = async (script: Omit<Script, 'id' | 'createdAt' | 'updatedAt'>) => {
+        try {
+            const newScript = await firebaseService.addScript(script) as Script;
+            setScripts(prev => [newScript, ...prev]);
+            showSuccessToast('Script created successfully');
+            return newScript;
+        } catch (error) {
+            console.error('Error adding script:', error);
+            showErrorToast('Failed to create script');
+            throw error;
+        }
     };
 
-    const updateScript = (id: string | null, script: Partial<Script>) => {
-        if (!id) return
-        setScripts(prev =>
-            prev.map(s => s.id === id ? { ...s, ...script, updatedAt: new Date() } : s)
-        );
+    const updateScript = async (id: string, script: Partial<Script>, options?: { showToast?: boolean }) => {
+        try {
+            if (!id) return;
+            await firebaseService.updateScript(id, script);
+            setScripts(prev =>
+                prev.map(s => s.id === id ? { ...s, ...script, updatedAt: new Date() } : s)
+            );
+
+            // Only show toast when explicitly requested (for significant changes)
+            // or for manual saves, not during typing
+            if (options?.showToast) {
+                showSuccessToast('Script updated successfully');
+            }
+        } catch (error) {
+            console.error('Error updating script:', error);
+            // Only show error toast for major operations, not during typing
+            if (options?.showToast) {
+                showErrorToast('Failed to update script');
+            }
+            throw error;
+        }
     };
 
-    const deleteScript = (id: string) => {
-        setScripts(prev => prev.filter(s => s.id !== id));
+    const deleteScript = async (id: string) => {
+        try {
+            await firebaseService.deleteScript(id);
+            setScripts(prev => prev.filter(s => s.id !== id));
+            showSuccessToast('Script deleted successfully');
+        } catch (error) {
+            console.error('Error deleting script:', error);
+            showErrorToast('Failed to delete script');
+            throw error;
+        }
     };
 
     const value = {
@@ -226,7 +358,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         updateScript,
         deleteScript,
         searchQuery,
-        setSearchQuery
+        setSearchQuery,
+        isLoading
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

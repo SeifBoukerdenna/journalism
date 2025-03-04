@@ -11,7 +11,6 @@ import Settings from './pages/Settings';
 import KeyboardShortcutsHelp from './components/common/KeyboardShortcutsHelp';
 import { useAppContext } from './contexts/AppContext';
 import { showSuccessToast } from './utils/toastService';
-import { initializeDummyData } from './utils/dummyData';
 
 // Import CSS files
 import './App.css';
@@ -20,7 +19,7 @@ import './styles/content-planner.css';
 import './styles/topbar.css';
 
 function App() {
-  const { theme, setTheme } = useAppContext();
+  const { theme, isLoading } = useAppContext();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isAppLoaded, setIsAppLoaded] = useState(false);
   const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
@@ -31,28 +30,21 @@ function App() {
     document.body.className = theme;
   }, [theme]);
 
-  // Initialize dummy data and simulate app loading
+  // Simulate app loading after Firebase data is loaded
   useEffect(() => {
-    // Force initialization of dummy data every time for testing
-    localStorage.removeItem('hasInitializedDummyData');
-
-    // Initialize dummy data
-    initializeDummyData();
-
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsAppLoaded(true);
+    if (!isLoading) {
       // Show welcome toast after loading
       setTimeout(() => {
-        showSuccessToast('Your workspace is ready', {
-          title: 'Welcome back!',
-          duration: 3000
-        });
-      }, 1000);
-    }, 2000); // Longer loading time to see the animation
-
-    return () => clearTimeout(timer);
-  }, []);
+        setIsAppLoaded(true);
+        setTimeout(() => {
+          showSuccessToast('Your workspace is ready', {
+            title: 'Welcome back!',
+            duration: 3000
+          });
+        }, 1000);
+      }, 500);
+    }
+  }, [isLoading]);
 
   // Set up keyboard shortcuts
   useEffect(() => {
@@ -137,7 +129,7 @@ function App() {
     );
   }
 
-  if (!isAppLoaded) {
+  if (isLoading || !isAppLoaded) {
     return (
       <div className={`loading-screen ${theme}`}>
         <div className="loading-content">
@@ -145,7 +137,7 @@ function App() {
           <div className="loading-spinner">
             <div className="spinner"></div>
           </div>
-          <p>Loading your workspace...</p>
+          <p>{isLoading ? 'Loading data from the cloud...' : 'Preparing your workspace...'}</p>
         </div>
       </div>
     );

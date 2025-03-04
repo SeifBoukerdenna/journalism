@@ -231,13 +231,13 @@ const ContentPlanner = () => {
 
                 <div className="planner-actions">
                     <div className="view-toggle">
-                        <button
+                        {/* <button
                             className={`btn-icon ${viewMode === 'calendar' ? 'active' : ''}`}
                             onClick={() => setViewMode('calendar')}
                             aria-label="Calendar view"
                         >
                             <span className="material-icons">calendar_month</span>
-                        </button>
+                        </button> */}
                         <button
                             className={`btn-icon ${viewMode === 'kanban' ? 'active' : ''}`}
                             onClick={() => setViewMode('kanban')}

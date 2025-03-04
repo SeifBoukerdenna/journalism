@@ -1,5 +1,6 @@
 // src/pages/ScriptEditor.tsx
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../contexts/AppContext';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
@@ -31,11 +32,13 @@ interface ScriptFormData {
 }
 
 const ScriptEditor = () => {
+    const navigate = useNavigate();
     const {
         scripts,
         contentPlans,
         addScript,
         updateScript,
+        deleteScript,
         searchQuery
     } = useAppContext();
 
@@ -59,6 +62,10 @@ const ScriptEditor = () => {
 
     // Preview modal state
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+    // Delete script confirmation dialog
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [scriptToDelete, setScriptToDelete] = useState<string | null>(null);
 
     // Fullscreen mode state
     const [isFullscreenMode, setIsFullscreenMode] = useState(false);
@@ -117,10 +124,9 @@ const ScriptEditor = () => {
                             notes: notesElement ? notesElement.value : section.notes || ''
                         };
                     })
-                });
+                }, { showToast: true });
                 setHasUnsavedChanges(false);
                 setLastSaved(new Date());
-                showSuccessToast('Script saved successfully');
             } catch (error) {
                 showErrorToast('Error saving script');
                 console.error('Error saving script:', error);
@@ -234,7 +240,20 @@ const ScriptEditor = () => {
 
             // Set new timer to auto-save after 30 seconds of inactivity
             autoSaveTimerRef.current = window.setTimeout(() => {
-                saveCurrentScript();
+                updateScript(currentScriptId, {
+                    ...currentScript,
+                    sections: currentScript?.sections.map((section, index) => {
+                        const textareaElement = document.getElementById(`section-content-${index}`) as HTMLTextAreaElement;
+                        const notesElement = document.getElementById(`section-notes-${index}`) as HTMLTextAreaElement;
+
+                        return {
+                            ...section,
+                            content: textareaElement ? textareaElement.value : section.content,
+                            notes: notesElement ? notesElement.value : section.notes || ''
+                        };
+                    }) || []
+                }, { showToast: false });
+                setHasUnsavedChanges(false);
                 setLastSaved(new Date());
             }, 30000); // 30 seconds
         }
@@ -245,7 +264,7 @@ const ScriptEditor = () => {
                 window.clearTimeout(autoSaveTimerRef.current);
             }
         };
-    }, [hasUnsavedChanges, currentScriptId, autoSaveEnabled, saveCurrentScript]);
+    }, [hasUnsavedChanges, currentScriptId, autoSaveEnabled, currentScript, updateScript]);
 
     // Handle navigation after confirmation
     useEffect(() => {
@@ -258,15 +277,15 @@ const ScriptEditor = () => {
     }, [showConfirmation, destination]);
 
     // Handle form submission
-    const handleScriptSubmit = (e: React.FormEvent) => {
+    const handleScriptSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             if (selectedScriptId) {
-                updateScript(selectedScriptId, scriptFormData);
+                await updateScript(selectedScriptId, scriptFormData, { showToast: true });
                 showSuccessToast('Script updated successfully');
             } else {
-                // Store the returned script and check if it exists before accessing the id
-                const newScript = addScript(scriptFormData);
+                // Await the Promise from addScript
+                const newScript = await addScript(scriptFormData);
                 if (newScript && newScript.id) {
                     setCurrentScriptId(newScript.id);
                     showSuccessToast('Script created successfully');
@@ -365,7 +384,7 @@ const ScriptEditor = () => {
                             ? { ...section, content, duration: durationSeconds }
                             : section
                     )
-                });
+                }, { showToast: false });
             }
         }, 500);
     };
@@ -439,7 +458,7 @@ const ScriptEditor = () => {
                     ? { ...section, content }
                     : section
             )
-        });
+        }, { showToast: false });
     };
 
     // Handle section title update
@@ -453,7 +472,7 @@ const ScriptEditor = () => {
                     ? { ...section, title }
                     : section
             )
-        });
+        }, { showToast: false });
     };
 
     // Function to handle opening the preview
@@ -466,6 +485,32 @@ const ScriptEditor = () => {
             setIsPreviewOpen(true);
         } else {
             showErrorToast('Please select or create a script first');
+        }
+    };
+
+    // Function to confirm script deletion
+    const confirmDeleteScript = (scriptId: string) => {
+        setScriptToDelete(scriptId);
+        setShowDeleteConfirmation(true);
+    };
+
+    // Function to actually delete the script
+    const handleDeleteScript = async () => {
+        if (!scriptToDelete) return;
+
+        try {
+            await deleteScript(scriptToDelete);
+
+            // If the deleted script was the current script, clear the current script
+            if (currentScriptId === scriptToDelete) {
+                setCurrentScriptId(null);
+            }
+
+            setShowDeleteConfirmation(false);
+            setScriptToDelete(null);
+        } catch (error) {
+            showErrorToast('Error deleting script');
+            console.error('Error deleting script:', error);
         }
     };
 
@@ -522,6 +567,16 @@ const ScriptEditor = () => {
                                                 aria-label="Edit script details"
                                             >
                                                 <span className="material-icons">edit</span>
+                                            </button>
+                                            <button
+                                                className="btn-icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    confirmDeleteScript(script.id);
+                                                }}
+                                                aria-label="Delete script"
+                                            >
+                                                <span className="material-icons">delete</span>
                                             </button>
                                         </div>
                                     </div>
@@ -637,7 +692,7 @@ const ScriptEditor = () => {
                                                             notes: ''
                                                         }
                                                     ]
-                                                });
+                                                }, { showToast: false });
 
                                                 // Focus on the new section
                                                 setActiveSectionIndex(currentScript.sections.length);
@@ -827,6 +882,18 @@ const ScriptEditor = () => {
                     onClose={() => setIsPreviewOpen(false)}
                 />
             </Modal>
+
+            {/* Delete Script Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={showDeleteConfirmation}
+                onClose={() => setShowDeleteConfirmation(false)}
+                onConfirm={handleDeleteScript}
+                title="Delete Script"
+                message="Are you sure you want to delete this script? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                type="danger"
+            />
 
             {/* Unsaved Changes Confirmation Dialog */}
             <ConfirmationDialog

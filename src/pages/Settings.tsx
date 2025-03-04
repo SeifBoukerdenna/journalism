@@ -7,6 +7,10 @@ import Tabs from '../components/common/Tabs';
 import Modal from '../components/common/Modal';
 import { useModals } from '../hooks/useModal';
 import { showSuccessToast, showErrorToast } from '../utils/toastService';
+import { collection, deleteDoc, getDocs, doc } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { COLLECTIONS } from '../firebase/firebaseService';
+import { initializeFirebaseData } from '../firebase/initializeFirebaseData';
 
 const Settings = () => {
     const { theme, setTheme } = useAppContext();
@@ -20,18 +24,44 @@ const Settings = () => {
 
     // Import file state
     const [importFile, setImportFile] = useState<File | null>(null);
+    const [isResetting, setIsResetting] = useState(false);
 
     // Export data as JSON file
-    const exportData = () => {
+    const exportData = async () => {
         try {
+            // Fetch all data from Firebase
+            const [topics, researchNotes, contentPlans, scripts] = await Promise.all([
+                getDocs(collection(db, COLLECTIONS.TOPICS)),
+                getDocs(collection(db, COLLECTIONS.RESEARCH_NOTES)),
+                getDocs(collection(db, COLLECTIONS.CONTENT_PLANS)),
+                getDocs(collection(db, COLLECTIONS.SCRIPTS))
+            ]);
+
+            // Convert to arrays of data
             const appData = {
-                topics: JSON.parse(localStorage.getItem('topics') || '[]'),
-                researchNotes: JSON.parse(localStorage.getItem('researchNotes') || '[]'),
-                contentPlans: JSON.parse(localStorage.getItem('contentPlans') || '[]'),
-                scripts: JSON.parse(localStorage.getItem('scripts') || '[]')
+                topics: topics.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                researchNotes: researchNotes.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                contentPlans: contentPlans.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                scripts: scripts.docs.map(doc => ({ id: doc.id, ...doc.data() }))
             };
 
-            const dataStr = JSON.stringify(appData, null, 2);
+            // Convert Firestore timestamps to ISO strings
+            const processData = (obj: any) => {
+                const result = { ...obj };
+                Object.keys(result).forEach(key => {
+                    // Check if it's a Firestore timestamp
+                    if (result[key] && typeof result[key].toDate === 'function') {
+                        result[key] = result[key].toDate().toISOString();
+                    } else if (typeof result[key] === 'object' && result[key] !== null) {
+                        // Process nested objects or arrays
+                        result[key] = processData(result[key]);
+                    }
+                });
+                return result;
+            };
+
+            const processedData = processData(appData);
+            const dataStr = JSON.stringify(processedData, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(dataBlob);
 
@@ -50,59 +80,37 @@ const Settings = () => {
         }
     };
 
-    // Import data from JSON file
-    const importData = () => {
-        if (!importFile) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = JSON.parse(e.target?.result as string);
-
-                // Validate data structure
-                if (data.topics && Array.isArray(data.topics)) {
-                    localStorage.setItem('topics', JSON.stringify(data.topics));
-                }
-
-                if (data.researchNotes && Array.isArray(data.researchNotes)) {
-                    localStorage.setItem('researchNotes', JSON.stringify(data.researchNotes));
-                }
-
-                if (data.contentPlans && Array.isArray(data.contentPlans)) {
-                    localStorage.setItem('contentPlans', JSON.stringify(data.contentPlans));
-                }
-
-                if (data.scripts && Array.isArray(data.scripts)) {
-                    localStorage.setItem('scripts', JSON.stringify(data.scripts));
-                }
-
-                // Force page reload to update data
-                window.location.reload();
-                showSuccessToast('Data successfully imported');
-            } catch (error) {
-                console.error('Error parsing import file:', error);
-                showErrorToast('Error importing data. Please make sure the file is a valid JSON backup.');
-            }
-        };
-
-        reader.readAsText(importFile);
-        closeModal('import');
+    // Function to delete all documents in a collection
+    const deleteCollection = async (collectionPath: string) => {
+        const querySnapshot = await getDocs(collection(db, collectionPath));
+        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
     };
 
-    // Reset all data
-    const resetData = () => {
+    // Reset all data in Firebase and reinitialize with sample data
+    const resetData = async () => {
+        setIsResetting(true);
         try {
-            localStorage.removeItem('topics');
-            localStorage.removeItem('researchNotes');
-            localStorage.removeItem('contentPlans');
-            localStorage.removeItem('scripts');
+            // Delete all documents from all collections
+            await Promise.all([
+                deleteCollection(COLLECTIONS.TOPICS),
+                deleteCollection(COLLECTIONS.RESEARCH_NOTES),
+                deleteCollection(COLLECTIONS.CONTENT_PLANS),
+                deleteCollection(COLLECTIONS.SCRIPTS)
+            ]);
 
-            // Force page reload to update data
+            // Reinitialize with sample data
+            await initializeFirebaseData();
+
+            showSuccessToast('All data has been reset to defaults');
+            // Force page reload to update data in the app
             window.location.reload();
-            showSuccessToast('All data has been reset');
         } catch (error) {
             showErrorToast('Error resetting data');
             console.error('Error resetting data:', error);
+        } finally {
+            setIsResetting(false);
+            closeModal('reset');
         }
     };
 
@@ -207,37 +215,19 @@ const Settings = () => {
 
                                         <div className="settings-option">
                                             <div className="option-description">
-                                                <h3>Import Data</h3>
+                                                <h3>Reset to Demo Data</h3>
                                                 <p>
-                                                    Restore your data from a previously exported JSON file.
-                                                    This will replace all current data with the imported data.
-                                                </p>
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                icon="upload"
-                                                onClick={() => openModal('import')}
-                                            >
-                                                Import Data
-                                            </Button>
-                                        </div>
-
-                                        <div className="settings-divider" />
-
-                                        <div className="settings-option">
-                                            <div className="option-description">
-                                                <h3>Reset All Data</h3>
-                                                <p>
-                                                    Delete all your data and start fresh.
+                                                    Reset all data to the default demo content.
+                                                    This will delete all your current content and replace it with the sample data.
                                                     This action cannot be undone, so make sure to export your data first if needed.
                                                 </p>
                                             </div>
                                             <Button
                                                 variant="danger"
-                                                icon="delete_forever"
+                                                icon="restart_alt"
                                                 onClick={() => openModal('reset')}
                                             >
-                                                Reset Data
+                                                Reset to Demo Data
                                             </Button>
                                         </div>
                                     </Card>
@@ -343,108 +333,6 @@ const Settings = () => {
                             ),
                         },
                         {
-                            id: 'social',
-                            label: 'Social Integration',
-                            icon: 'share',
-                            content: (
-                                <div className="settings-section">
-                                    <Card title="YouTube Integration">
-                                        <div className="connection-status not-connected">
-                                            <div className="status-icon">
-                                                <span className="material-icons">link_off</span>
-                                            </div>
-                                            <div className="status-info">
-                                                <h3>Not Connected</h3>
-                                                <p>Connect your YouTube account to enable direct publishing and analytics integration.</p>
-                                            </div>
-                                            <Button
-                                                variant="primary"
-                                                icon="link"
-                                                onClick={() => {
-                                                    showSuccessToast('Connection initiated. Please complete authentication in the pop-up window.');
-                                                }}
-                                            >
-                                                Connect Account
-                                            </Button>
-                                        </div>
-                                    </Card>
-
-                                    <Card title="Twitter/X Integration">
-                                        <div className="connection-status not-connected">
-                                            <div className="status-icon">
-                                                <span className="material-icons">link_off</span>
-                                            </div>
-                                            <div className="status-info">
-                                                <h3>Not Connected</h3>
-                                                <p>Connect your Twitter/X account to share your content automatically.</p>
-                                            </div>
-                                            <Button
-                                                variant="primary"
-                                                icon="link"
-                                                onClick={() => {
-                                                    showSuccessToast('Connection initiated. Please complete authentication in the pop-up window.');
-                                                }}
-                                            >
-                                                Connect Account
-                                            </Button>
-                                        </div>
-                                    </Card>
-
-                                    <Card title="Other Platforms">
-                                        <div className="platform-list">
-                                            <div className="platform-item">
-                                                <span className="platform-icon">
-                                                    <span className="material-icons">podcasts</span>
-                                                </span>
-                                                <span className="platform-name">Spotify</span>
-                                                <Button
-                                                    variant="outline"
-                                                    size="small"
-                                                    onClick={() => {
-                                                        showSuccessToast('Connection initiated');
-                                                    }}
-                                                >
-                                                    Connect
-                                                </Button>
-                                            </div>
-
-                                            <div className="platform-item">
-                                                <span className="platform-icon">
-                                                    <span className="material-icons">rss_feed</span>
-                                                </span>
-                                                <span className="platform-name">RSS Feed</span>
-                                                <Button
-                                                    variant="outline"
-                                                    size="small"
-                                                    onClick={() => {
-                                                        showSuccessToast('RSS feed configuration initiated');
-                                                    }}
-                                                >
-                                                    Configure
-                                                </Button>
-                                            </div>
-
-                                            <div className="platform-item">
-                                                <span className="platform-icon">
-                                                    <span className="material-icons">article</span>
-                                                </span>
-                                                <span className="platform-name">Medium</span>
-                                                <Button
-                                                    variant="outline"
-                                                    size="small"
-                                                    onClick={() => {
-                                                        showSuccessToast('Connection initiated');
-                                                    }}
-                                                >
-                                                    Connect
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </Card>
-                                </div>
-                            ),
-                        },
-                        {
                             id: 'about',
                             label: 'About',
                             icon: 'info',
@@ -468,13 +356,14 @@ const Settings = () => {
                                                     <li>Content Planner with Kanban and Calendar views</li>
                                                     <li>Script Editor with section management</li>
                                                     <li>Real-time word count and duration estimation</li>
+                                                    <li>Cloud storage with Firebase</li>
                                                     <li>Data backup and restore</li>
                                                 </ul>
                                             </div>
 
                                             <div className="credits">
                                                 <h3>Created with ❤️ for your channel</h3>
-                                                <p>Built using React, TypeScript, and Vite</p>
+                                                <p>Built using React, TypeScript, Vite, and Firebase</p>
                                             </div>
                                         </div>
                                     </Card>
@@ -509,7 +398,7 @@ const Settings = () => {
             >
                 <div className="modal-content">
                     <p>
-                        You're about to export all your data, including:
+                        You're about to export all your data from Firebase, including:
                     </p>
                     <ul>
                         <li>Research topics and notes</li>
@@ -517,53 +406,8 @@ const Settings = () => {
                         <li>Scripts and sections</li>
                     </ul>
                     <p>
-                        The data will be saved as a JSON file that you can use for backup or transfer to another device.
+                        The data will be saved as a JSON file that you can use for backup purposes.
                     </p>
-                </div>
-            </Modal>
-
-            {/* Import Data Modal */}
-            <Modal
-                isOpen={isModalOpen('import')}
-                onClose={() => closeModal('import')}
-                title="Import Data"
-                actions={
-                    <>
-                        <Button
-                            variant="outline"
-                            onClick={() => closeModal('import')}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={importData}
-                            disabled={!importFile}
-                        >
-                            Import
-                        </Button>
-                    </>
-                }
-            >
-                <div className="modal-content">
-                    <p>
-                        Importing data will replace all your current data. Make sure to backup your current data first if needed.
-                    </p>
-                    <div className="import-file-input">
-                        <label htmlFor="import-file">Select Backup File (JSON)</label>
-                        <input
-                            type="file"
-                            id="import-file"
-                            accept=".json"
-                            onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                        />
-                    </div>
-                    {importFile && (
-                        <div className="file-selected">
-                            <span className="material-icons">check_circle</span>
-                            <span>File selected: {importFile.name}</span>
-                        </div>
-                    )}
                 </div>
             </Modal>
 
@@ -571,7 +415,7 @@ const Settings = () => {
             <Modal
                 isOpen={isModalOpen('reset')}
                 onClose={() => closeModal('reset')}
-                title="Reset All Data"
+                title="Reset to Demo Data"
                 actions={
                     <>
                         <Button
@@ -583,8 +427,9 @@ const Settings = () => {
                         <Button
                             variant="danger"
                             onClick={resetData}
+                            disabled={isResetting}
                         >
-                            Reset All Data
+                            {isResetting ? 'Resetting...' : 'Reset All Data'}
                         </Button>
                     </>
                 }
@@ -595,7 +440,7 @@ const Settings = () => {
                     </div>
                     <h3>Warning: This action cannot be undone</h3>
                     <p>
-                        You are about to delete all your data, including:
+                        You are about to delete all your current data from Firebase and restore the default demo content, including:
                     </p>
                     <ul>
                         <li>All research topics and notes</li>
