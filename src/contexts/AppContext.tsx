@@ -11,6 +11,7 @@ interface Topic {
     tags: string[];
     createdAt: Date;
     updatedAt: Date;
+    isFavorite?: boolean;
 }
 
 interface ResearchNote {
@@ -55,7 +56,7 @@ interface AppContextType {
     theme: 'light' | 'dark';
     setTheme: (theme: 'light' | 'dark') => void;
     topics: Topic[];
-    addTopic: (topic: Omit<Topic, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+    addTopic: (topic: Omit<Topic, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
     updateTopic: (id: string, topic: Partial<Topic>) => Promise<void>;
     deleteTopic: (id: string) => Promise<void>;
     researchNotes: ResearchNote[];
@@ -73,6 +74,11 @@ interface AppContextType {
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     isLoading: boolean;
+    // Favorites functionality
+    favoriteTopics: string[];
+    addToFavorites: (id: string) => void;
+    removeFromFavorites: (id: string) => void;
+    toggleFavorite: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -102,13 +108,27 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
-    // Save theme to localStorage
+    // Favorites state - both localStorage and Firebase
+    const [favoriteTopics, setFavoriteTopics] = useState<string[]>(() => {
+        const savedFavorites = localStorage.getItem('favoriteTopics');
+        return savedFavorites ? JSON.parse(savedFavorites) : [];
+    });
+
+    // Save theme to localStorage and Firebase
     useEffect(() => {
         localStorage.setItem('theme', theme);
         // Save theme preference to Firebase
         firebaseService.saveUserSettings({ theme })
             .catch(error => console.error('Error saving theme preference:', error));
     }, [theme]);
+
+    // Save favorites to localStorage and Firebase when they change
+    useEffect(() => {
+        localStorage.setItem('favoriteTopics', JSON.stringify(favoriteTopics));
+        // Save favorites to Firebase
+        firebaseService.saveFavoriteTopics(favoriteTopics)
+            .catch(error => console.error('Error saving favorites to Firebase:', error));
+    }, [favoriteTopics]);
 
     // Load data from Firebase on initial load
     useEffect(() => {
@@ -120,8 +140,16 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
                 // Load user settings first
                 const settings = await firebaseService.getUserSettings();
-                if (settings && settings.theme) {
-                    setTheme(settings.theme);
+                if (settings) {
+                    // Apply theme preference if available
+                    if (settings.theme) {
+                        setTheme(settings.theme);
+                    }
+
+                    // Load favorite topics from settings
+                    if (settings.favoriteTopics) {
+                        setFavoriteTopics(settings.favoriteTopics);
+                    }
                 }
 
                 // Load all data in parallel
@@ -132,7 +160,13 @@ export const AppProvider = ({ children }: AppProviderProps) => {
                     firebaseService.getScripts()
                 ]);
 
-                setTopics(topicsData as Topic[]);
+                // Mark topics that are favorites
+                const enhancedTopics = topicsData.map(topic => ({
+                    ...topic,
+                    isFavorite: favoriteTopics.includes(topic.id)
+                }));
+
+                setTopics(enhancedTopics as Topic[]);
                 setResearchNotes(notesData as ResearchNote[]);
                 setContentPlans(plansData as ContentPlan[]);
                 setScripts(scriptsData as Script[]);
@@ -147,7 +181,15 @@ export const AppProvider = ({ children }: AppProviderProps) => {
                     const savedPlans = localStorage.getItem('contentPlans');
                     const savedScripts = localStorage.getItem('scripts');
 
-                    if (savedTopics) setTopics(JSON.parse(savedTopics));
+                    if (savedTopics) {
+                        const parsedTopics = JSON.parse(savedTopics);
+                        // Mark topics that are favorites
+                        const enhancedTopics = parsedTopics.map((topic: any) => ({
+                            ...topic,
+                            isFavorite: favoriteTopics.includes(topic.id)
+                        }));
+                        setTopics(enhancedTopics);
+                    }
                     if (savedNotes) setResearchNotes(JSON.parse(savedNotes));
                     if (savedPlans) setContentPlans(JSON.parse(savedPlans));
                     if (savedScripts) setScripts(JSON.parse(savedScripts));
@@ -170,6 +212,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
             const newTopic = await firebaseService.addTopic(topic) as Topic;
             setTopics(prev => [newTopic, ...prev]);
             showSuccessToast('Topic created successfully');
+            return newTopic;
         } catch (error) {
             console.error('Error adding topic:', error);
             showErrorToast('Failed to create topic');
@@ -203,6 +246,12 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
             setTopics(prev => prev.filter(t => t.id !== id));
             setResearchNotes(prev => prev.filter(note => note.topicId !== id));
+
+            // Also remove from favorites if it's there
+            if (favoriteTopics.includes(id)) {
+                setFavoriteTopics(prev => prev.filter(topicId => topicId !== id));
+            }
+
             showSuccessToast('Topic deleted successfully');
         } catch (error) {
             console.error('Error deleting topic:', error);
@@ -338,6 +387,51 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         }
     };
 
+    // Favorites management functions
+    const addToFavorites = (id: string) => {
+        if (!favoriteTopics.includes(id)) {
+            const newFavorites = [...favoriteTopics, id];
+            setFavoriteTopics(newFavorites);
+
+            // Update the isFavorite property on the topic
+            setTopics(prev =>
+                prev.map(topic => topic.id === id ? { ...topic, isFavorite: true } : topic)
+            );
+
+            // Update in Firebase
+            updateTopic(id, { isFavorite: true }).catch(error => {
+                console.error("Error updating favorite status in database:", error);
+            });
+
+            showSuccessToast('Topic added to favorites');
+        }
+    };
+
+    const removeFromFavorites = (id: string) => {
+        const newFavorites = favoriteTopics.filter(topicId => topicId !== id);
+        setFavoriteTopics(newFavorites);
+
+        // Update the isFavorite property on the topic
+        setTopics(prev =>
+            prev.map(topic => topic.id === id ? { ...topic, isFavorite: false } : topic)
+        );
+
+        // Update in Firebase
+        updateTopic(id, { isFavorite: false }).catch(error => {
+            console.error("Error updating favorite status in database:", error);
+        });
+
+        showSuccessToast('Topic removed from favorites');
+    };
+
+    const toggleFavorite = (id: string) => {
+        if (favoriteTopics.includes(id)) {
+            removeFromFavorites(id);
+        } else {
+            addToFavorites(id);
+        }
+    };
+
     const value = {
         theme,
         setTheme,
@@ -359,7 +453,12 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         deleteScript,
         searchQuery,
         setSearchQuery,
-        isLoading
+        isLoading,
+        // Favorites functionality
+        favoriteTopics,
+        addToFavorites,
+        removeFromFavorites,
+        toggleFavorite
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

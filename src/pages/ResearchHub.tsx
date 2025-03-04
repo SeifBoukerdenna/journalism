@@ -5,6 +5,7 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import EmptyState from '../components/common/EmptyState';
+import ConfirmationDialog from '../components/common/ConfirmationDialog';
 import { useModal } from '../hooks/useModal';
 import { showSuccessToast, showErrorToast } from '../utils/toastService';
 
@@ -12,6 +13,7 @@ interface TopicFormData {
     title: string;
     description: string;
     tags: string[];
+    isFavorite?: boolean;
 }
 
 interface ResearchNoteFormData {
@@ -31,7 +33,10 @@ const ResearchHub = () => {
         addResearchNote,
         updateResearchNote,
         deleteResearchNote,
-        searchQuery
+        searchQuery,
+        favoriteTopics,
+        addToFavorites,
+        removeFromFavorites
     } = useAppContext();
 
     // State for modals
@@ -47,6 +52,12 @@ const ResearchHub = () => {
         closeModal: closeNoteModal
     } = useModal(false);
 
+    // State for deletion confirmation
+    const [topicToDelete, setTopicToDelete] = useState<string | null>(null);
+    const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+    const [showTopicDeleteConfirm, setShowTopicDeleteConfirm] = useState(false);
+    const [showNoteDeleteConfirm, setShowNoteDeleteConfirm] = useState(false);
+
     const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
     const [selectedNote, setSelectedNote] = useState<string | null>(null);
     const [activeFilter, setActiveFilter] = useState<string>('all');
@@ -56,7 +67,8 @@ const ResearchHub = () => {
     const [topicFormData, setTopicFormData] = useState<TopicFormData>({
         title: '',
         description: '',
-        tags: []
+        tags: [],
+        isFavorite: false
     });
 
     const [noteFormData, setNoteFormData] = useState<ResearchNoteFormData>({
@@ -66,15 +78,35 @@ const ResearchHub = () => {
         sources: ['']
     });
 
-    // Filtered topics based on search query
-    const filteredTopics = topics.filter(topic => {
-        if (!searchQuery) return true;
-        return (
-            topic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (topic.description && topic.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            topic.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
-    });
+    // Get filtered topics based on current filter
+    const getFilteredTopics = () => {
+        let filtered = topics;
+
+        // First apply search query filter
+        if (searchQuery) {
+            filtered = filtered.filter(topic => {
+                return (
+                    topic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (topic.description && topic.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                    topic.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+                );
+            });
+        }
+
+        // Then apply selected filter
+        if (activeFilter === 'favorite') {
+            filtered = filtered.filter(topic => favoriteTopics.includes(topic.id));
+        } else if (activeFilter === 'recent') {
+            // Sort by updatedAt in descending order and take the top 5
+            return [...filtered].sort((a, b) => {
+                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            }).slice(0, 5);
+        }
+
+        return filtered;
+    };
+
+    const filteredTopics = getFilteredTopics();
 
     // Filtered notes based on selected topic and search query
     const filteredNotes = researchNotes.filter(note => {
@@ -87,13 +119,38 @@ const ResearchHub = () => {
         return matchesSearch && matchesTopic;
     });
 
+    // Toggle a topic as favorite
+    const toggleFavorite = (topicId: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent triggering the topic selection
+
+        const topic = topics.find(t => t.id === topicId);
+        if (!topic) return;
+
+        if (favoriteTopics.includes(topicId)) {
+            removeFromFavorites(topicId);
+            // Update in the database
+            updateTopic(topicId, { isFavorite: false }).catch(error => {
+                console.error("Error updating favorite status in database:", error);
+                showErrorToast("Failed to update favorite status");
+            });
+        } else {
+            addToFavorites(topicId);
+            // Update in the database
+            updateTopic(topicId, { isFavorite: true }).catch(error => {
+                console.error("Error updating favorite status in database:", error);
+                showErrorToast("Failed to update favorite status");
+            });
+        }
+    };
+
     // Reset form data when modals close
     useEffect(() => {
         if (!isTopicModalOpen) {
             setTopicFormData({
                 title: '',
                 description: '',
-                tags: []
+                tags: [],
+                isFavorite: false
             });
         }
     }, [isTopicModalOpen]);
@@ -117,11 +174,12 @@ const ResearchHub = () => {
                 setTopicFormData({
                     title: topic.title,
                     description: topic.description || '',
-                    tags: [...topic.tags]
+                    tags: [...topic.tags],
+                    isFavorite: favoriteTopics.includes(topic.id)
                 });
             }
         }
-    }, [selectedTopic, isTopicModalOpen, topics]);
+    }, [selectedTopic, isTopicModalOpen, topics, favoriteTopics]);
 
     useEffect(() => {
         if (selectedNote && isNoteModalOpen) {
@@ -143,11 +201,24 @@ const ResearchHub = () => {
         try {
             if (selectedTopic) {
                 updateTopic(selectedTopic, topicFormData);
+
+                // Update favorite status if changed
+                if (topicFormData.isFavorite && !favoriteTopics.includes(selectedTopic)) {
+                    addToFavorites(selectedTopic);
+                } else if (!topicFormData.isFavorite && favoriteTopics.includes(selectedTopic)) {
+                    removeFromFavorites(selectedTopic);
+                }
+
                 showSuccessToast('Topic updated successfully');
             } else {
                 addTopic({
                     ...topicFormData,
                     tags: topicFormData.tags
+                }).then((newTopic: any) => {
+                    // If the new topic should be a favorite
+                    if (topicFormData.isFavorite && newTopic && newTopic.id) {
+                        addToFavorites(newTopic.id);
+                    }
                 });
                 showSuccessToast('Topic created successfully');
             }
@@ -249,32 +320,49 @@ const ResearchHub = () => {
         openNoteModal();
     };
 
-    // Delete a topic with confirmation
-    const confirmDeleteTopic = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this topic? All related notes will also be deleted.')) {
-            try {
-                deleteTopic(id);
-                showSuccessToast('Topic deleted successfully');
-                if (selectedTopic === id) {
-                    setSelectedTopic(null);
-                }
-            } catch (error) {
-                showErrorToast('Error deleting topic');
-                console.error('Error deleting topic:', error);
+    // Show delete confirmation dialog for topic
+    const promptDeleteTopic = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setTopicToDelete(id);
+        setShowTopicDeleteConfirm(true);
+    };
+
+    // Show delete confirmation dialog for note
+    const promptDeleteNote = (id: string) => {
+        setNoteToDelete(id);
+        setShowNoteDeleteConfirm(true);
+    };
+
+    // Handle actual topic deletion after confirmation
+    const handleDeleteTopic = () => {
+        if (!topicToDelete) return;
+
+        try {
+            deleteTopic(topicToDelete);
+
+            if (selectedTopic === topicToDelete) {
+                setSelectedTopic(null);
             }
+
+            setShowTopicDeleteConfirm(false);
+            setTopicToDelete(null);
+        } catch (error) {
+            showErrorToast('Error deleting topic');
+            console.error('Error deleting topic:', error);
         }
     };
 
-    // Delete a note with confirmation
-    const confirmDeleteNote = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this research note?')) {
-            try {
-                deleteResearchNote(id);
-                showSuccessToast('Research note deleted successfully');
-            } catch (error) {
-                showErrorToast('Error deleting note');
-                console.error('Error deleting note:', error);
-            }
+    // Handle actual note deletion after confirmation
+    const handleDeleteNote = () => {
+        if (!noteToDelete) return;
+
+        try {
+            deleteResearchNote(noteToDelete);
+            setShowNoteDeleteConfirm(false);
+            setNoteToDelete(null);
+        } catch (error) {
+            showErrorToast('Error deleting note');
+            console.error('Error deleting note:', error);
         }
     };
 
@@ -353,13 +441,19 @@ const ResearchHub = () => {
                             </button>
                             <button
                                 className={`topic-filter-btn ${activeFilter === 'recent' ? 'active' : ''}`}
-                                onClick={() => setActiveFilter('recent')}
+                                onClick={() => {
+                                    setActiveFilter('recent');
+                                    setSelectedTopic(null);
+                                }}
                             >
                                 Recent
                             </button>
                             <button
                                 className={`topic-filter-btn ${activeFilter === 'favorite' ? 'active' : ''}`}
-                                onClick={() => setActiveFilter('favorite')}
+                                onClick={() => {
+                                    setActiveFilter('favorite');
+                                    setSelectedTopic(null);
+                                }}
                             >
                                 Favorites
                             </button>
@@ -385,6 +479,15 @@ const ResearchHub = () => {
                                         <div className="topic-actions">
                                             <button
                                                 className="btn-icon"
+                                                onClick={(e) => toggleFavorite(topic.id, e)}
+                                                aria-label={favoriteTopics.includes(topic.id) ? "Remove from favorites" : "Add to favorites"}
+                                            >
+                                                <span className={`material-icons topic-favorite-icon ${favoriteTopics.includes(topic.id) ? 'topic-favorite-star active' : ''}`}>
+                                                    {favoriteTopics.includes(topic.id) ? 'star' : 'star_border'}
+                                                </span>
+                                            </button>
+                                            <button
+                                                className="btn-icon"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     openEditTopic(topic.id);
@@ -395,10 +498,7 @@ const ResearchHub = () => {
                                             </button>
                                             <button
                                                 className="btn-icon"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    confirmDeleteTopic(topic.id);
-                                                }}
+                                                onClick={(e) => promptDeleteTopic(topic.id, e)}
                                                 aria-label="Delete topic"
                                             >
                                                 <span className="material-icons">delete</span>
@@ -408,9 +508,15 @@ const ResearchHub = () => {
                                 ))
                             ) : (
                                 <EmptyState
-                                    title="No topics found"
-                                    description="Create your first research topic to get started."
-                                    icon="topic"
+                                    title={activeFilter === 'favorite' ? "No favorite topics" :
+                                        activeFilter === 'recent' ? "No recent topics" :
+                                            "No topics found"}
+                                    description={activeFilter === 'favorite' ? "Star topics to add them to your favorites." :
+                                        activeFilter === 'recent' ? "Recently updated topics will appear here." :
+                                            "Create your first research topic to get started."}
+                                    icon={activeFilter === 'favorite' ? "star_border" :
+                                        activeFilter === 'recent' ? "history" :
+                                            "topic"}
                                     action={{
                                         label: "New Topic",
                                         onClick: () => openTopicModal()
@@ -425,7 +531,9 @@ const ResearchHub = () => {
                     <Card
                         title={selectedTopic
                             ? topics.find(t => t.id === selectedTopic)?.title || 'Research Notes'
-                            : 'All Research Notes'
+                            : activeFilter === 'favorite' ? 'Favorite Topics Notes' :
+                                activeFilter === 'recent' ? 'Recent Topics Notes' :
+                                    'All Research Notes'
                         }
                         actionIcon={selectedTopic ? 'edit' : undefined}
                         onAction={selectedTopic ? () => openEditTopic(selectedTopic) : undefined}
@@ -446,7 +554,7 @@ const ResearchHub = () => {
                                                 </button>
                                                 <button
                                                     className="btn-icon"
-                                                    onClick={() => confirmDeleteNote(note.id)}
+                                                    onClick={() => promptDeleteNote(note.id)}
                                                     aria-label="Delete note"
                                                 >
                                                     <span className="material-icons">delete</span>
@@ -541,6 +649,18 @@ const ResearchHub = () => {
                             placeholder="Enter topic description"
                             rows={4}
                         />
+                    </div>
+
+                    <div className="form-group">
+                        <div className="checkbox-option">
+                            <input
+                                type="checkbox"
+                                id="topic-favorite"
+                                checked={topicFormData.isFavorite}
+                                onChange={(e) => setTopicFormData({ ...topicFormData, isFavorite: e.target.checked })}
+                            />
+                            <label htmlFor="topic-favorite">Mark as favorite</label>
+                        </div>
                     </div>
 
                     <div className="form-group">
@@ -698,6 +818,36 @@ const ResearchHub = () => {
                     </div>
                 </form>
             </Modal>
+
+            {/* Delete Topic Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={showTopicDeleteConfirm}
+                onClose={() => {
+                    setShowTopicDeleteConfirm(false);
+                    setTopicToDelete(null);
+                }}
+                onConfirm={handleDeleteTopic}
+                title="Delete Topic"
+                message="Are you sure you want to delete this topic? All related notes will also be deleted. This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                type="danger"
+            />
+
+            {/* Delete Note Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={showNoteDeleteConfirm}
+                onClose={() => {
+                    setShowNoteDeleteConfirm(false);
+                    setNoteToDelete(null);
+                }}
+                onConfirm={handleDeleteNote}
+                title="Delete Research Note"
+                message="Are you sure you want to delete this research note? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                type="danger"
+            />
         </div>
     );
 };

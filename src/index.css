@@ -3561,3 +3561,38 @@ body {
 body.fullscreen-active {
   overflow: hidden;
 }
+
+.topic-item {
+  position: relative;
+}
+
+.topic-item .topic-favorite-star {
+  color: var(--warning-color);
+}
+
+.topic-item .topic-favorite-star.active {
+  color: var(--warning-color);
+  animation: star-pulse 0.3s ease;
+}
+
+.topic-item .topic-favorite-icon {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.topic-item .topic-favorite-icon:hover {
+  transform: scale(1.2);
+}
+
+@keyframes star-pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.3);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}

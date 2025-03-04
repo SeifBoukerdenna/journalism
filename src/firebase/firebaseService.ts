@@ -11,6 +11,7 @@ import {
   serverTimestamp,
   Timestamp,
   DocumentData,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "./config";
 
@@ -63,6 +64,26 @@ export const getCollection = async (collectionName: string) => {
     return data;
   } catch (error) {
     console.error(`Error getting ${collectionName}:`, error);
+    throw error;
+  }
+};
+
+// Generic function to fetch a single document from a collection
+export const getDocument = async (collectionName: string, id: string) => {
+  try {
+    const docRef = doc(db, collectionName, id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const docData = docSnap.data();
+      return {
+        id: docSnap.id,
+        ...convertTimestamps(docData),
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error getting document from ${collectionName}:`, error);
     throw error;
   }
 };
@@ -155,6 +176,25 @@ export const saveUserSettings = async (settings: any) => {
   }
 };
 
+// Function to save favorite topics
+export const saveFavoriteTopics = async (favoriteTopics: string[]) => {
+  try {
+    // We use 'user-settings' as a fixed ID since we only have one user
+    const docRef = doc(db, COLLECTIONS.USER_SETTINGS, "user-settings");
+
+    const settingsData = {
+      favoriteTopics,
+      updatedAt: serverTimestamp(),
+    };
+
+    await setDoc(docRef, settingsData, { merge: true });
+    return favoriteTopics;
+  } catch (error) {
+    console.error("Error saving favorite topics:", error);
+    throw error;
+  }
+};
+
 // Function to get user settings
 export const getUserSettings = async () => {
   try {
@@ -181,6 +221,7 @@ export const getUserSettings = async () => {
 
 // Specific collection operations
 export const getTopics = () => getCollection(COLLECTIONS.TOPICS);
+export const getTopic = (id: string) => getDocument(COLLECTIONS.TOPICS, id);
 export const addTopic = (data: any) => addDocument(COLLECTIONS.TOPICS, data);
 export const updateTopic = (id: string, data: any) =>
   updateDocument(COLLECTIONS.TOPICS, id, data);
@@ -188,6 +229,8 @@ export const deleteTopic = (id: string) =>
   deleteDocument(COLLECTIONS.TOPICS, id);
 
 export const getResearchNotes = () => getCollection(COLLECTIONS.RESEARCH_NOTES);
+export const getResearchNote = (id: string) =>
+  getDocument(COLLECTIONS.RESEARCH_NOTES, id);
 export const addResearchNote = (data: any) =>
   addDocument(COLLECTIONS.RESEARCH_NOTES, data);
 export const updateResearchNote = (id: string, data: any) =>
@@ -196,6 +239,8 @@ export const deleteResearchNote = (id: string) =>
   deleteDocument(COLLECTIONS.RESEARCH_NOTES, id);
 
 export const getContentPlans = () => getCollection(COLLECTIONS.CONTENT_PLANS);
+export const getContentPlan = (id: string) =>
+  getDocument(COLLECTIONS.CONTENT_PLANS, id);
 export const addContentPlan = (data: any) =>
   addDocument(COLLECTIONS.CONTENT_PLANS, data);
 export const updateContentPlan = (id: string, data: any) =>
@@ -204,6 +249,7 @@ export const deleteContentPlan = (id: string) =>
   deleteDocument(COLLECTIONS.CONTENT_PLANS, id);
 
 export const getScripts = () => getCollection(COLLECTIONS.SCRIPTS);
+export const getScript = (id: string) => getDocument(COLLECTIONS.SCRIPTS, id);
 export const addScript = (data: any) => addDocument(COLLECTIONS.SCRIPTS, data);
 export const updateScript = (id: string, data: any) =>
   updateDocument(COLLECTIONS.SCRIPTS, id, data);
