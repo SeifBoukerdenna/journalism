@@ -27,7 +27,9 @@ const EnhancedScriptEditor: React.FC<EnhancedScriptEditorProps> = ({
     onCalculateDuration
 }) => {
     const [activeTab, setActiveTab] = useState<'script' | 'notes'>('script');
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const scriptTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const editorRef = useRef<HTMLDivElement>(null);
     const [wordCount, setWordCount] = useState(0);
     const [characterCount, setCharacterCount] = useState(0);
     const [isBold, setIsBold] = useState(false);
@@ -45,6 +47,33 @@ const EnhancedScriptEditor: React.FC<EnhancedScriptEditorProps> = ({
             setCharacterCount(0);
         }
     }, [section.content]);
+
+    // Handle fullscreen mode
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isFullscreen) {
+                setIsFullscreen(false);
+            }
+        };
+
+        document.addEventListener('keydown', handleEsc);
+        return () => {
+            document.removeEventListener('keydown', handleEsc);
+        };
+    }, [isFullscreen]);
+
+    // Focus textarea when entering fullscreen
+    useEffect(() => {
+        if (isFullscreen && scriptTextareaRef.current && activeTab === 'script') {
+            setTimeout(() => {
+                scriptTextareaRef.current?.focus();
+            }, 100);
+        }
+    }, [isFullscreen, activeTab]);
+
+    const toggleFullscreen = () => {
+        setIsFullscreen(!isFullscreen);
+    }
 
     const formatDuration = (seconds: number = 0) => {
         const minutes = Math.floor(seconds / 60);
@@ -116,7 +145,7 @@ const EnhancedScriptEditor: React.FC<EnhancedScriptEditorProps> = ({
     };
 
     return (
-        <div className="section-editor">
+        <div className={`section-editor ${isFullscreen ? 'fullscreen' : ''}`} ref={editorRef}>
             <div className="section-header">
                 <div className="section-title-container">
                     <input
@@ -197,6 +226,20 @@ const EnhancedScriptEditor: React.FC<EnhancedScriptEditorProps> = ({
                         <span className="material-icons">insert_photo</span>
                     </button>
                 </div>
+
+                {/* Fullscreen toggle button */}
+                <div className="toolbar-group" style={{ marginLeft: 'auto' }}>
+                    <button
+                        type="button"
+                        className="toolbar-btn fullscreen-toggle"
+                        onClick={toggleFullscreen}
+                        title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                    >
+                        <span className="material-icons">
+                            {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
+                        </span>
+                    </button>
+                </div>
             </div>
 
             <div className="editor-tabs">
@@ -219,8 +262,6 @@ const EnhancedScriptEditor: React.FC<EnhancedScriptEditorProps> = ({
                                             onCalculateDuration(newContent, section.id);
                                         }}
                                         placeholder="Write your script here... Use the toolbar above for formatting options."
-                                        // Make textarea resizable
-                                        style={{ resize: 'both' }}
                                     />
 
                                     <div className="word-count-indicator">
@@ -250,8 +291,6 @@ const EnhancedScriptEditor: React.FC<EnhancedScriptEditorProps> = ({
                                             onChange(section.content); // This triggers rerender but preserves content
                                         }}
                                         placeholder="Add additional notes, camera directions, or visual cues here..."
-                                        // Make textarea resizable
-                                        style={{ resize: 'both' }}
                                     />
                                 </div>
                             ),

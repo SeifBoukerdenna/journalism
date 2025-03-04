@@ -3399,3 +3399,165 @@ body {
     width: 95%;
   }
 }
+
+/* Fullscreen overlay that covers the entire viewport */
+.fullscreen-editor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg-color);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header styling in fullscreen mode */
+.fullscreen-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: var(--card-bg-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.fullscreen-editor-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.fullscreen-editor-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Content area styling */
+.fullscreen-editor-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Tabs styling in fullscreen mode */
+.fullscreen-editor-tabs {
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  overflow-x: auto;
+  background-color: var(--card-bg-color);
+}
+
+.fullscreen-tabs-scroll {
+  display: flex;
+  padding: 0 24px;
+}
+
+/* Enhanced textarea styling in fullscreen mode */
+.fullscreen-editor-content .script-textarea-container {
+  padding: 32px;
+  display: flex;
+  justify-content: center;
+  flex: 1;
+}
+
+.fullscreen-editor-content .script-textarea {
+  max-width: 900px;
+  width: 100%;
+  padding: 60px 80px;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+
+.dark .fullscreen-editor-content .script-textarea {
+  background-color: #1e293b;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced notes textarea in fullscreen mode */
+.fullscreen-editor-content .notes-textarea-container {
+  padding: 32px;
+  display: flex;
+  justify-content: center;
+  flex: 1;
+}
+
+.fullscreen-editor-content .notes-textarea {
+  max-width: 900px;
+  width: 100%;
+  padding: 40px 60px;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+
+.dark .fullscreen-editor-content .notes-textarea {
+  background-color: #1e293b;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Improved word count indicator for fullscreen mode */
+.fullscreen-editor-content .word-count-indicator {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  background-color: var(--card-bg-color);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Editor toolbar in fullscreen mode */
+.fullscreen-editor-content .editor-toolbar {
+  padding: 12px 24px;
+  background-color: var(--card-bg-color);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+
+  .fullscreen-editor-content .script-textarea,
+  .fullscreen-editor-content .notes-textarea {
+    padding: 30px 40px;
+  }
+
+  .fullscreen-editor-content .script-textarea-container,
+  .fullscreen-editor-content .notes-textarea-container {
+    padding: 16px;
+  }
+
+  .fullscreen-editor-header {
+    padding: 12px 16px;
+  }
+}
+
+/* Animation for smooth transitions */
+.fullscreen-editor-overlay {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Hide scrollbar on body when fullscreen is active */
+body.fullscreen-active {
+  overflow: hidden;
+}

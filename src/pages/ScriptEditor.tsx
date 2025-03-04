@@ -11,10 +11,12 @@ import ConfirmationDialog from '../components/common/ConfirmationDialog';
 import { showSuccessToast, showErrorToast } from '../utils/toastService';
 import EnhancedScriptEditor from '../components/enhanced/EnhancedScriptEditor';
 import ScriptPreview from '../components/enhanced/ScriptPreview';
+import FullscreenScriptEditor from '../components/enhanced/FullscreenScriptEditor';
 
 // Import the script editor styles
 import '../styles/enhanced-script-editor.css';
 import '../styles/script-preview.css';
+import '../styles/fullscreen-editor.css';
 
 interface ScriptFormData {
     title: string;
@@ -58,6 +60,9 @@ const ScriptEditor = () => {
     // Preview modal state
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
+    // Fullscreen mode state
+    const [isFullscreenMode, setIsFullscreenMode] = useState(false);
+
     // Unsaved changes tracking
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const {
@@ -90,6 +95,11 @@ const ScriptEditor = () => {
     const currentScript = currentScriptId
         ? scripts.find(s => s.id === currentScriptId)
         : null;
+
+    // Function to toggle fullscreen mode
+    const toggleFullscreenMode = () => {
+        setIsFullscreenMode(!isFullscreenMode);
+    };
 
     // Function to save changes to the current script
     const saveCurrentScript = useCallback(() => {
@@ -568,6 +578,15 @@ const ScriptEditor = () => {
                                         </span>
                                     )}
 
+                                    {/* Fullscreen button */}
+                                    <Button
+                                        variant="outline"
+                                        icon="fullscreen"
+                                        onClick={toggleFullscreenMode}
+                                    >
+                                        Fullscreen
+                                    </Button>
+
                                     {/* Preview & Export Button */}
                                     <Button
                                         variant="outline"
@@ -656,6 +675,20 @@ const ScriptEditor = () => {
                     )}
                 </div>
             </div>
+
+            {/* Fullscreen Editor Modal */}
+            {isFullscreenMode && currentScript && currentScript.sections[activeSectionIndex] && (
+                <FullscreenScriptEditor
+                    section={currentScript.sections[activeSectionIndex]}
+                    activeSectionIndex={activeSectionIndex}
+                    allSections={currentScript.sections}
+                    onClose={toggleFullscreenMode}
+                    onChange={handleSectionContentUpdate}
+                    onTitleChange={handleSectionTitleUpdate}
+                    onCalculateDuration={calculateSectionStats}
+                    onSectionChange={setActiveSectionIndex}
+                />
+            )}
 
             {/* New/Edit Script Modal */}
             <Modal

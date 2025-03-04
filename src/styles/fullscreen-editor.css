@@ -1,0 +1,290 @@
+/* src/styles/fullscreen-editor.css */
+
+/* True Fullscreen Mode for Script Editor */
+
+/* Fullscreen overlay that covers the entire viewport */
+.fullscreen-editor-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg-color);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header styling in fullscreen mode */
+.fullscreen-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background-color: var(--card-bg-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.fullscreen-editor-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.fullscreen-editor-title .section-title-input {
+    font-size: 1.2rem;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    padding: 8px 0;
+    width: 400px;
+    color: var(--text-color);
+    border-bottom: 1px solid transparent;
+}
+
+.fullscreen-editor-title .section-title-input:focus {
+    outline: none;
+    border-bottom-color: var(--primary-color);
+}
+
+.fullscreen-editor-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Content area styling */
+.fullscreen-editor-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Tabs styling in fullscreen mode */
+.fullscreen-editor-tabs {
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    overflow-x: auto;
+    background-color: var(--card-bg-color);
+}
+
+.fullscreen-tabs-scroll {
+    display: flex;
+    padding: 0 24px;
+}
+
+.fullscreen-editor-tabs .section-tab {
+    padding: 14px 20px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.fullscreen-editor-tabs .section-tab.active {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.fullscreen-editor-tabs .section-tab:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.dark .fullscreen-editor-tabs .section-tab:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.fullscreen-editor-tabs .section-duration {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    font-weight: normal;
+}
+
+/* Enhanced textarea styling in fullscreen mode */
+.fullscreen-editor-content .script-textarea-container {
+    padding: 32px;
+    display: flex;
+    justify-content: center;
+    flex: 1;
+    position: relative;
+}
+
+.fullscreen-editor-content .script-textarea {
+    max-width: 900px;
+    width: 100%;
+    padding: 60px 80px;
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+    font-size: 16px;
+    line-height: 1.8;
+    border: none;
+    resize: none;
+    color: var(--text-color);
+}
+
+.dark .fullscreen-editor-content .script-textarea {
+    background-color: #1e293b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced notes textarea in fullscreen mode */
+.fullscreen-editor-content .notes-textarea-container {
+    padding: 32px;
+    display: flex;
+    justify-content: center;
+    flex: 1;
+    position: relative;
+}
+
+.fullscreen-editor-content .notes-textarea {
+    max-width: 900px;
+    width: 100%;
+    padding: 40px 60px;
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+    font-size: 15px;
+    line-height: 1.7;
+    border: none;
+    resize: none;
+    color: var(--text-color);
+}
+
+.dark .fullscreen-editor-content .notes-textarea {
+    background-color: #1e293b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Improved word count indicator for fullscreen mode */
+.fullscreen-editor-content .word-count-indicator {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    background-color: var(--card-bg-color);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 5;
+}
+
+.dark .fullscreen-editor-content .word-count-indicator {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Editor toolbar in fullscreen mode */
+.fullscreen-editor-content .editor-toolbar {
+    padding: 12px 24px;
+    background-color: var(--card-bg-color);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.fullscreen-editor-content .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 12px;
+    border-right: 1px solid var(--border-color);
+}
+
+.fullscreen-editor-content .toolbar-group:last-child {
+    border-right: none;
+}
+
+.fullscreen-editor-content .toolbar-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.fullscreen-editor-content .toolbar-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark .fullscreen-editor-content .toolbar-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.fullscreen-editor-content .toolbar-btn.active {
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--primary-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+
+    .fullscreen-editor-content .script-textarea,
+    .fullscreen-editor-content .notes-textarea {
+        padding: 30px 40px;
+    }
+
+    .fullscreen-editor-content .script-textarea-container,
+    .fullscreen-editor-content .notes-textarea-container {
+        padding: 16px;
+    }
+
+    .fullscreen-editor-header {
+        padding: 12px 16px;
+    }
+
+    .fullscreen-editor-content .word-count-indicator {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .fullscreen-editor-title .section-title-input {
+        width: 200px;
+    }
+}
+
+/* Animation for smooth transitions */
+.fullscreen-editor-overlay {
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Hide scrollbar on body when fullscreen is active */
+body.fullscreen-active {
+    overflow: hidden;
+}
+
+/* Focus styles for better accessibility */
+.fullscreen-editor-content .script-textarea:focus,
+.fullscreen-editor-content .notes-textarea:focus {
+    outline: none;
+}
