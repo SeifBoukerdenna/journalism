@@ -1,4 +1,4 @@
-// src/App.tsx
+// src/App.tsx - Updated with YouTube Studio integration
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Sidebar from './components/common/Sidebar';
@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import ResearchHub from './pages/ResearchHub';
 import ContentPlanner from './pages/ContentPlanner';
 import ScriptEditor from './pages/ScriptEditor';
+import YouTubeStudio from './pages/YouTubeStudio'; // Import the new component
 import Settings from './pages/Settings';
 import KeyboardShortcutsHelp from './components/common/KeyboardShortcutsHelp';
 import { useAppContext } from './contexts/AppContext';
@@ -17,6 +18,7 @@ import './App.css';
 import './styles/enhanced-script-editor.css';
 import './styles/content-planner.css';
 import './styles/topbar.css';
+import './styles/youtube-studio.css'; // Import the YouTube Studio styles
 
 function App() {
   const { theme, isLoading } = useAppContext();
@@ -166,6 +168,7 @@ function App() {
               <Route path="/research" element={<ResearchHub />} />
               <Route path="/planner" element={<ContentPlanner />} />
               <Route path="/script" element={<ScriptEditor />} />
+              <Route path="/youtube" element={<YouTubeStudio />} /> {/* New route for YouTube Studio */}
               <Route path="/settings" element={<Settings />} />
 
               {/* Fallback route for 404 */}

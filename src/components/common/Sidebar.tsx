@@ -1,4 +1,4 @@
-// src/components/common/Sidebar.tsx
+// src/components/common/Sidebar.tsx - Updated with YouTube Studio menu item
 import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../contexts/AppContext';
@@ -30,6 +30,7 @@ const Sidebar = ({ isMobileOpen, isCollapsed, toggleCollapse, toggleMobileNav }:
         { path: '/research', label: 'Research Hub', icon: 'search' },
         { path: '/planner', label: 'Content Planner', icon: 'calendar_month', badge: upcomingVideos > 0 ? upcomingVideos : undefined },
         { path: '/script', label: 'Script Editor', icon: 'edit_note' },
+        { path: '/youtube', label: 'YouTube Studio', icon: 'movie' }, // New menu item for YouTube Studio
         { path: '/settings', label: 'Settings', icon: 'settings' }
     ];
 
