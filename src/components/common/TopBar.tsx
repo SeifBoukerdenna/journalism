@@ -2,6 +2,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../contexts/AppContext';
+import SearchBar from './SearchBar';
+
+// Import the enhanced search styles
+import '../../styles/enhanced-search.css';
 
 interface TopBarProps {
     toggleMobileNav: () => void;
@@ -11,11 +15,9 @@ interface TopBarProps {
 
 const TopBar = ({ }: TopBarProps) => {
     const navigate = useNavigate();
-    const { theme, setTheme, searchQuery, setSearchQuery } = useAppContext();
-    const [isSearchActive, setIsSearchActive] = useState(false);
+    const { theme, setTheme } = useAppContext();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-    const searchInputRef = useRef<HTMLInputElement>(null);
     const notificationRef = useRef<HTMLDivElement>(null);
     const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -23,7 +25,7 @@ const TopBar = ({ }: TopBarProps) => {
         setTheme(theme === 'light' ? 'dark' : 'light');
     };
 
-    // Handle click outside notifications
+    // Handle clicks outside dropdowns
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
@@ -40,56 +42,14 @@ const TopBar = ({ }: TopBarProps) => {
         };
     }, []);
 
-    // Handle search activation
-    useEffect(() => {
-        if (isSearchActive && searchInputRef.current) {
-            searchInputRef.current.focus();
-        }
-    }, [isSearchActive]);
-
-    // Handle search submission
-    const handleSearchSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (searchQuery) {
-            // Trigger search across the app
-            console.log('Searching for:', searchQuery);
-            // You can navigate to a search results page or handle it within the current context
-        }
-    };
-
     return (
         <header className="topbar">
             <div className="topbar-left">
-                <div className="search-container">
-                    <form onSubmit={handleSearchSubmit}>
-                        {isSearchActive ? (
-                            <input
-                                ref={searchInputRef}
-                                type="text"
-                                className="search-input"
-                                placeholder="Search topics, content, notes..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onBlur={() => {
-                                    if (!searchQuery) setIsSearchActive(false);
-                                }}
-                            />
-                        ) : (
-                            <button
-                                type="button"
-                                className="btn-icon search-toggle"
-                                onClick={() => setIsSearchActive(true)}
-                                aria-label="Search"
-                            >
-                                <span className="material-icons">search</span>
-                                <span className="search-label">Search</span>
-                            </button>
-                        )}
-                    </form>
-                </div>
+                <SearchBar />
             </div>
 
             <div className="topbar-actions">
+                {/* Theme toggle button */}
                 <button
                     className="btn-icon with-text"
                     onClick={toggleTheme}
@@ -103,6 +63,7 @@ const TopBar = ({ }: TopBarProps) => {
                     </span>
                 </button>
 
+                {/* Notifications dropdown */}
                 <div className="notifications-dropdown" ref={notificationRef}>
                     <button
                         className="btn-icon"
@@ -161,6 +122,7 @@ const TopBar = ({ }: TopBarProps) => {
                     )}
                 </div>
 
+                {/* User profile menu */}
                 <div className="profile-menu" ref={userMenuRef}>
                     <button
                         className="profile-button"
