@@ -354,3 +354,370 @@
         padding: 24px;
     }
 }
+
+
+/* Mobile fixes for Script Editor - add to your enhanced-script-editor.css file */
+
+/* Fix mobile layout for script editor page */
+@media (max-width: 768px) {
+    .script-editor-container {
+        padding: 0 12px;
+    }
+
+    /* Fix header structure */
+    .script-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px 0;
+    }
+
+    .script-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Fix the content grid layout */
+    .script-content {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Scripts sidebar fixes - make it visible on mobile */
+    .scripts-sidebar {
+        display: block !important;
+        /* Override any display:none */
+        width: 100%;
+        margin-bottom: 16px;
+    }
+
+    /* Script list height */
+    .scripts-list {
+        max-height: 200px;
+        /* Reduce height on mobile */
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 4px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Script list items */
+    .script-item {
+        margin-bottom: 4px;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 6px;
+    }
+
+    .script-item .script-info {
+        max-width: calc(100% - 80px);
+        /* Account for action buttons */
+        overflow: hidden;
+    }
+
+    .script-item .script-info h3 {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.95rem;
+    }
+
+    .script-meta {
+        font-size: 0.8rem;
+    }
+
+    /* Editor container adjustments */
+    .editor-container {
+        height: auto;
+        max-height: calc(100vh - 400px);
+        /* Ensure there's enough space to see content */
+        min-height: 400px;
+    }
+
+    /* Editor header on mobile */
+    .editor-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+
+    .editor-controls {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    /* Tabs adjustments */
+    .section-tab {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+
+    /* Editor body fix */
+    .editor-body {
+        min-height: 300px;
+    }
+
+    /* Textarea improvements */
+    .script-textarea,
+    .notes-textarea {
+        padding: 16px;
+        font-size: 0.95rem;
+    }
+
+    /* Modify script editor to ensure it's visible and usable */
+    .script-editor {
+        height: auto;
+        min-height: 400px;
+    }
+
+    /* Fix display issues with Script item buttons */
+    .script-item .script-actions {
+        display: flex;
+        gap: 4px;
+    }
+
+    .script-item .script-actions .btn-icon {
+        width: 30px;
+        height: 30px;
+    }
+
+    /* Fix for placeholder when no script is selected */
+    .script-editor-container .card {
+        margin-bottom: 0;
+    }
+
+    /* Preview modal footer fix */
+    .preview-footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .preview-primary-actions,
+    .preview-export-actions {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* Special fixes for very small screens */
+@media (max-width: 480px) {
+    .editor-controls {
+        gap: 8px;
+    }
+
+    .editor-tabs {
+        min-height: 300px;
+    }
+
+    /* Adjust modals */
+    .script-preview-container {
+        padding: 12px;
+    }
+
+    .preview-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .preview-tabs {
+        width: 100%;
+    }
+}
+
+/* Make sure the Card component doesn't hide content */
+.card {
+    overflow: visible;
+}
+
+/* Ensure sidebar card is always visible on mobile */
+@media (max-width: 768px) {
+    .scripts-sidebar .card {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+}
+
+/* Additional fixes for Script Editor content area on mobile */
+
+@media (max-width: 768px) {
+
+    /* Ensure the editor container and content is visible */
+    .editor-container {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        min-height: 400px !important;
+        margin-top: 20px;
+    }
+
+    /* Fix for card content visibility */
+    .card-content {
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    /* Make script editor visible */
+    .script-editor {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 400px !important;
+    }
+
+    /* Ensure editor body is visible */
+    .editor-body {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        min-height: 300px !important;
+        visibility: visible !important;
+    }
+
+    /* Fix tab content visibility */
+    .tabs-content {
+        display: flex !important;
+        flex: 1 !important;
+        min-height: 300px !important;
+        visibility: visible !important;
+    }
+
+    /* Fix textarea container visibility */
+    .script-textarea-container,
+    .notes-textarea-container {
+        display: flex !important;
+        flex: 1 !important;
+        min-height: 250px !important;
+        visibility: visible !important;
+        width: 100% !important;
+    }
+
+    /* Make the actual textarea visible and properly sized */
+    .script-textarea,
+    .notes-textarea {
+        display: block !important;
+        visibility: visible !important;
+        min-height: 250px !important;
+        width: 100% !important;
+        flex: 1 !important;
+        padding: 16px !important;
+    }
+
+    /* Ensure sections tabs are scrollable */
+    .sections-tabs {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        white-space: nowrap !important;
+        width: 100% !important;
+    }
+
+    /* Fix editor header visibility */
+    .editor-header {
+        display: flex !important;
+        visibility: visible !important;
+    }
+
+    /* Fix the appearance of empty state cards */
+    .empty-state {
+        min-height: 200px !important;
+        display: flex !important;
+        visibility: visible !important;
+    }
+
+    /* Fix for editor container when no script is selected */
+    .editor-container .card {
+        min-height: 300px !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Fix for labels within the editor */
+    .auto-save-toggle {
+        display: flex !important;
+        align-items: center !important;
+        visibility: visible !important;
+    }
+
+    /* Fix for buttons in the editor */
+    .editor-controls button {
+        display: flex !important;
+        visibility: visible !important;
+    }
+
+    /* Adjust layout for small screens */
+    @media (max-width: 480px) {
+        .editor-container {
+            min-height: 350px !important;
+        }
+
+        .script-textarea,
+        .notes-textarea {
+            font-size: 14px !important;
+        }
+
+        /* Ensure control buttons are visible */
+        .auto-save-toggle {
+            font-size: 0.8rem !important;
+        }
+
+        /* Add bottom margin to make sure content is not hidden behind potential fixed elements */
+        .script-editor-container {
+            margin-bottom: 60px !important;
+        }
+    }
+}
+
+/* Fix for script content on very small screens */
+@media (max-width: 360px) {
+    .editor-container {
+        min-height: 300px !important;
+    }
+
+    .script-textarea,
+    .notes-textarea {
+        padding: 12px !important;
+    }
+
+    /* Smaller text for very small screens */
+    .editor-title-area h2 {
+        font-size: 1.2rem !important;
+    }
+
+    .script-statistics {
+        font-size: 0.75rem !important;
+    }
+
+    /* Stack controls vertically to save space */
+    .editor-controls {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+}
+
+/* Fix for the content area being cut off at the bottom */
+.script-editor-container {
+    padding-bottom: 80px !important;
+}
+
+/* Fix for the Mobile title showing instead of script title */
+.editor-title-area h2:not(:empty) {
+    display: block !important;
+}
+
+/* Hide the "Mobile" title if it's showing */
+.card-title:contains("Mobile") {
+    display: none !important;
+}

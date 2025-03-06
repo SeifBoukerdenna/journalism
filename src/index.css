@@ -3596,3 +3596,196 @@ body.fullscreen-active {
     transform: scale(1);
   }
 }
+
+/* Mobile fixes for Research Hub - add to your main CSS or create a new file */
+
+/* Improved Research Hub Mobile Layout */
+@media (max-width: 768px) {
+
+  /* Container adjustments */
+  .research-hub-container {
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Fix header layout on mobile */
+  .research-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .research-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Main content grid layout for mobile */
+  .research-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 16px 16px;
+  }
+
+  /* Topics sidebar on mobile */
+  .topics-sidebar {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  /* Topic items in the list */
+  .topic-item {
+    padding: 12px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+  }
+
+  .topic-item .topic-info {
+    width: calc(100% - 100px);
+    /* Account for action buttons */
+    overflow: hidden;
+  }
+
+  .topic-item .topic-info h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .topic-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  /* Filter adjustments */
+  .topics-filter {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .topics-filter::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari/Opera */
+  }
+
+  .topic-filter-btn {
+    padding: 6px 12px;
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+
+  /* Notes grid in different views */
+  .notes-grid.grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notes-grid.list {
+    grid-template-columns: 1fr;
+  }
+
+  /* Note cards on mobile */
+  .note-card {
+    margin-bottom: 12px;
+  }
+
+  .note-header {
+    flex-wrap: nowrap;
+  }
+
+  .note-header h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 70px);
+    /* Account for action buttons */
+  }
+
+  .note-content {
+    max-height: 100px;
+    overflow: hidden;
+  }
+
+  /* Fix modal width on mobile */
+  @media (max-width: 480px) {
+
+    .modal-medium,
+    .modal-large {
+      width: 95%;
+      max-width: 95%;
+    }
+
+    .modal-content {
+      padding: 16px;
+    }
+
+    /* Form fixes */
+    .form-row {
+      flex-direction: column;
+    }
+
+    .tags-input-container {
+      flex-wrap: wrap;
+    }
+
+    .topic-form,
+    .note-form {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+  }
+
+  /* View toggle on mobile */
+  .view-toggle {
+    margin-left: auto;
+  }
+
+  /* Empty states on mobile */
+  .empty-state {
+    padding: 32px 16px;
+  }
+}
+
+/* Specific fixes for portrait orientation */
+@media (max-width: 768px) and (orientation: portrait) {
+
+  /* Topics sidebar scrolling */
+  .topics-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  /* Notes container height */
+  .notes-container {
+    height: auto;
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+.topics-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.topics-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.topics-list::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.dark .topics-list::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+}

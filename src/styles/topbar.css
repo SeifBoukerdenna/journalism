@@ -346,3 +346,120 @@
         display: none;
     }
 }
+
+
+
+/* Additional TopBar styles to be added to topbar.css */
+
+/* Fix for mobile topbar layout */
+@media (max-width: 768px) {
+    .topbar {
+        padding: 0 10px;
+        height: var(--topbar-height);
+        display: flex;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+    .topbar-left {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        min-width: 0;
+        /* Enable flexbox shrinking */
+    }
+
+    .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+    }
+
+    /* When search is active */
+    .topbar.search-active .topbar-left {
+        flex: 1;
+        z-index: 21;
+    }
+
+    .topbar.search-active .topbar-actions {
+        opacity: 1;
+        transition: opacity 0.2s ease;
+    }
+
+    /* Hide text in buttons on very small screens */
+    @media (max-width: 480px) {
+        .btn-icon.with-text .btn-text {
+            display: none;
+        }
+
+        .btn-icon.with-text {
+            width: 36px;
+            padding: 0;
+            justify-content: center;
+        }
+
+        .topbar.search-active .topbar-actions {
+            opacity: 0;
+            pointer-events: none;
+        }
+    }
+}
+
+/* Fix notification dropdown positioning on mobile */
+@media (max-width: 768px) {
+    .notifications-panel {
+        position: fixed;
+        top: var(--topbar-height);
+        right: 0;
+        width: 100%;
+        max-width: 320px;
+        max-height: calc(100vh - var(--topbar-height));
+        overflow-y: auto;
+        border-radius: 0 0 0 12px;
+        box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-menu {
+        position: fixed;
+        top: var(--topbar-height);
+        right: 0;
+        width: 100%;
+        max-width: 280px;
+        max-height: calc(100vh - var(--topbar-height));
+        overflow-y: auto;
+        border-radius: 0 0 0 12px;
+        box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .notification-item {
+        padding: 10px 12px;
+    }
+
+    .notifications-list {
+        max-height: 50vh;
+    }
+}
+
+/* Fix for mobile sidebar toggle */
+.mobile-sidebar-toggle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-sidebar-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        margin-right: 4px;
+        flex-shrink: 0;
+    }
+
+    .sidebar-toggle-btn {
+        display: none;
+    }
+}

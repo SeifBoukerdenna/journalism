@@ -864,11 +864,11 @@ const ScriptEditor = () => {
                             >
                                 <span className="material-icons">add_circle</span>
                                 <span>Add Section</span>
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </Modal>
+                            </button >
+                        </div >
+                    </div >
+                </form >
+            </Modal >
 
             {/* Script Preview Modal */}
             <Modal
@@ -884,7 +884,7 @@ const ScriptEditor = () => {
             </Modal>
 
             {/* Delete Script Confirmation Dialog */}
-            <ConfirmationDialog
+            < ConfirmationDialog
                 isOpen={showDeleteConfirmation}
                 onClose={() => setShowDeleteConfirmation(false)}
                 onConfirm={handleDeleteScript}
@@ -896,7 +896,7 @@ const ScriptEditor = () => {
             />
 
             {/* Unsaved Changes Confirmation Dialog */}
-            <ConfirmationDialog
+            < ConfirmationDialog
                 isOpen={showConfirmation}
                 onClose={cancelNavigation}
                 onConfirm={confirmNavigation}
@@ -906,7 +906,7 @@ const ScriptEditor = () => {
                 cancelText="Stay"
                 type="warning"
             />
-        </div>
+        </div >
     );
 };
 
