@@ -1,6 +1,6 @@
 // src/pages/ScriptEditor.tsx
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../contexts/AppContext';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
@@ -13,8 +13,12 @@ import { showSuccessToast, showErrorToast } from '../utils/toastService';
 import EnhancedScriptEditor from '../components/enhanced/EnhancedScriptEditor';
 import ScriptPreview from '../components/enhanced/ScriptPreview';
 import FullscreenScriptEditor from '../components/enhanced/FullscreenScriptEditor';
+import ScriptImporter, { ImportedSection } from '../components/enhanced/ScriptImporter';
+
+
 
 // Import the script editor styles
+import '../styles/script-importer.css'; // Make sure to import the styles
 import '../styles/enhanced-script-editor.css';
 import '../styles/script-preview.css';
 import '../styles/fullscreen-editor.css';
@@ -32,7 +36,7 @@ interface ScriptFormData {
 }
 
 const ScriptEditor = () => {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const {
         scripts,
         contentPlans,
@@ -41,6 +45,92 @@ const ScriptEditor = () => {
         deleteScript,
         searchQuery
     } = useAppContext();
+
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [importOptions, _] = useState({
+        importAsNewScript: true
+    })
+
+    const handleScriptImport = (importData: { title: string; sections: ImportedSection[] }) => {
+        const { title, sections } = importData;
+
+        if (importOptions?.importAsNewScript || !currentScriptId) {
+            // Create a new script with the imported content
+            const newScriptData = {
+                title: title || "Imported Script",
+                contentPlanId: '',
+                sections: sections.map(section => ({
+                    id: crypto.randomUUID(),
+                    title: section.title || "Untitled Section",
+                    content: section.content || "",
+                    notes: "",
+                    duration: section.duration || 0
+                }))
+            };
+
+            addScript(newScriptData)
+                .then(newScript => {
+                    setCurrentScriptId(newScript.id);
+                    setActiveSectionIndex(0);
+                    showSuccessToast('New script created from imported document');
+                })
+                .catch(error => {
+                    console.error("Error creating script from import:", error);
+                    showErrorToast('Failed to create script from import');
+                });
+        } else if (currentScriptId && currentScript) {
+            // Update the current script with the imported content
+            // First confirm if this will replace existing content
+            if (currentScript.sections.length > 0 &&
+                window.confirm('Replace current script sections with imported content?')) {
+
+                // Replace all sections with imported ones
+                const updatedScript = {
+                    ...currentScript,
+                    sections: sections.map(section => ({
+                        id: crypto.randomUUID(),
+                        title: section.title || "Untitled Section",
+                        content: section.content || "",
+                        notes: "",
+                        duration: section.duration || 0
+                    }))
+                };
+
+                updateScript(currentScriptId, updatedScript, { showToast: true })
+                    .then(() => {
+                        setActiveSectionIndex(0);
+                        showSuccessToast('Script updated with imported content');
+                    })
+                    .catch(error => {
+                        console.error("Error updating script with imported content:", error);
+                        showErrorToast('Failed to update script with imported content');
+                    });
+            } else if (currentScript.sections.length === 0) {
+                // If the script is empty, just add the sections without confirmation
+                const updatedScript = {
+                    ...currentScript,
+                    sections: sections.map(section => ({
+                        id: crypto.randomUUID(),
+                        title: section.title || "Untitled Section",
+                        content: section.content || "",
+                        notes: "",
+                        duration: section.duration || 0
+                    }))
+                };
+
+                updateScript(currentScriptId, updatedScript, { showToast: true })
+                    .then(() => {
+                        setActiveSectionIndex(0);
+                        showSuccessToast('Imported content added to script');
+                    })
+                    .catch(error => {
+                        console.error("Error updating script with imported content:", error);
+                        showErrorToast('Failed to update script with imported content');
+                    });
+            }
+        }
+    };
+
 
     // Reference for the timer in word count calculation
     const timerRef = useRef<number | null>(null);
@@ -530,6 +620,13 @@ const ScriptEditor = () => {
                     >
                         New Script
                     </Button>
+                    <Button
+                        variant="outline"
+                        icon="upload_file"
+                        onClick={() => setIsImportModalOpen(true)}
+                    >
+                        Import
+                    </Button>
                 </div>
             </div>
 
@@ -905,6 +1002,11 @@ const ScriptEditor = () => {
                 confirmText="Leave"
                 cancelText="Stay"
                 type="warning"
+            />
+            <ScriptImporter
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onImport={handleScriptImport}
             />
         </div >
     );

@@ -1,0 +1,85 @@
+/* Changelog Container */
+.changelog-container {
+    margin-top: 16px;
+}
+
+/* Title and Description */
+.changelog-container h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.changelog-container p {
+    color: var(--text-light);
+    margin-bottom: 16px;
+}
+
+/* Empty State for when no changelog is available */
+.empty-state {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-light);
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.empty-state-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.empty-state-description {
+    color: var(--text-light);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Changelog List & Items */
+.changelog-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.changelog-item {
+    background-color: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 16px;
+}
+
+/* Header Section: Version & Date */
+.changelog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.changelog-version {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.changelog-date {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+/* List of Changes */
+.changelog-changes {
+    margin-top: 8px;
+    list-style: none;
+    padding-left: 0;
+    color: var(--text-color);
+}
+
+.changelog-changes li {
+    margin-bottom: 4px;
+}

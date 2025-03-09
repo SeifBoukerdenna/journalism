@@ -299,12 +299,14 @@
     max-height: calc(100vh - 260px);
     overflow-y: auto;
     scrollbar-width: thin;
+    color: white !important;
 }
 
 .script-item {
     transition: all var(--transition-speed) ease;
     margin-bottom: 8px;
     border-left: 3px solid transparent;
+    color: white !important;
 }
 
 .script-item.active {

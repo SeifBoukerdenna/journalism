@@ -10,12 +10,15 @@
   },
   "dependencies": {
     "firebase": "^11.4.0",
+    "mammoth": "^1.9.0",
+    "pdfjs-dist": "^4.10.38",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@types/pdfjs-dist": "^2.10.377",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@types/uuid": "^9.0.7",

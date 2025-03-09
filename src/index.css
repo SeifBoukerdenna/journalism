@@ -991,6 +991,7 @@
 .scripts-list {
   max-height: 600px;
   overflow-y: auto;
+  color: white !important;
 }
 
 .script-item {
@@ -1002,6 +1003,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
+  color: white !important;
 }
 
 .script-item:hover {
@@ -1018,12 +1020,15 @@
 
 .script-info {
   flex: 1;
+  color: white !important;
 }
 
 .script-info h3 {
   font-size: 1rem;
   font-weight: 500;
   margin-bottom: 4px;
+  color: white !important;
+  color: white !important;
 }
 
 .script-meta {
@@ -2756,12 +2761,14 @@ body {
   max-height: calc(100vh - 260px);
   overflow-y: auto;
   scrollbar-width: thin;
+  color: white !important;
 }
 
 .script-item {
   transition: all var(--transition-speed) ease;
   margin-bottom: 8px;
   border-left: 3px solid transparent;
+  color: white !important;
 }
 
 .script-item.active {
@@ -3788,4 +3795,46 @@ body.fullscreen-active {
 
 .dark .topics-list::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+.activity-log-container {
+  margin-top: 16px;
+}
+
+.activity-log-container h2 {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.activity-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activity-item {
+  display: flex;
+  gap: 12px;
+}
+
+.activity-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: rgba(37, 99, 235, 0.1);
+  /* or color-coded based on type */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-content p {
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.activity-time {
+  font-size: 0.8rem;
+  color: var(--text-light);
 }

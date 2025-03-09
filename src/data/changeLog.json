@@ -1,0 +1,28 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2025-02-27",
+    "changes": [
+      "Initial release with basic settings and data management",
+      "Added Firebase integration and default demo data"
+    ]
+  },
+  {
+    "version": "1.1.0",
+    "date": "2025-03-1",
+    "changes": [
+      "Improved UI for the Script Editor",
+      "Introduced a new Preferences tab in Settings",
+      "Bug fixes and performance improvements"
+    ]
+  },
+  {
+    "version": "1.2.0",
+    "date": "2025-03-08",
+    "changes": [
+      "Added advanced backup/restore options",
+      "Refined notifications system",
+      "Minor style adjustments for dark mode"
+    ]
+  }
+]

@@ -1,4 +1,5 @@
 // src/pages/Settings.tsx
+
 import { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import Card from '../components/common/Card';
@@ -7,10 +8,13 @@ import Tabs from '../components/common/Tabs';
 import Modal from '../components/common/Modal';
 import { useModals } from '../hooks/useModal';
 import { showSuccessToast, showErrorToast } from '../utils/toastService';
-import { collection, deleteDoc, getDocs, doc } from 'firebase/firestore';
+import { collection, deleteDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { COLLECTIONS } from '../firebase/firebaseService';
 import { initializeFirebaseData } from '../firebase/initializeFirebaseData';
+
+// NEW IMPORT for Changelog
+import Changelog from '../components/Changelog';
 
 const Settings = () => {
     const { theme, setTheme } = useAppContext();
@@ -198,8 +202,9 @@ const Settings = () => {
                                             <div className="option-description">
                                                 <h3>Export Data</h3>
                                                 <p>
-                                                    Save all your research topics, notes, content plans, and scripts as a JSON file.
-                                                    You can use this file to restore your data later or transfer to another device.
+                                                    Save all your research topics, notes, content plans,
+                                                    and scripts as a JSON file. You can use this file to
+                                                    restore your data later or transfer to another device.
                                                 </p>
                                             </div>
                                             <Button
@@ -218,7 +223,7 @@ const Settings = () => {
                                                 <h3>Reset to Demo Data</h3>
                                                 <p>
                                                     Reset all data to the default demo content.
-                                                    This will delete all your current content and replace it with the sample data.
+                                                    This will delete all your current content and replace it with sample data.
                                                     This action cannot be undone, so make sure to export your data first if needed.
                                                 </p>
                                             </div>
@@ -342,6 +347,7 @@ const Settings = () => {
                                         <div className="about-content">
                                             <div className="app-info">
                                                 <h2>Content Studio</h2>
+                                                <p className="app-version">February 25th, 2025</p>
                                                 <p className="app-version">Version 1.0.0</p>
                                                 <p className="app-description">
                                                     A comprehensive tool for political and social content creators.
@@ -370,6 +376,19 @@ const Settings = () => {
                                 </div>
                             ),
                         },
+                        // NEW TAB: Changelog
+                        {
+                            id: 'changelog',
+                            label: 'Changelog',
+                            icon: 'change_history',
+                            content: (
+                                <div className="settings-section">
+                                    <Card title="Developer Changelog">
+                                        <Changelog />
+                                    </Card>
+                                </div>
+                            )
+                        }
                     ]}
                 />
             </div>
@@ -381,16 +400,10 @@ const Settings = () => {
                 title="Export Data"
                 actions={
                     <>
-                        <Button
-                            variant="outline"
-                            onClick={() => closeModal('export')}
-                        >
+                        <Button variant="outline" onClick={() => closeModal('export')}>
                             Cancel
                         </Button>
-                        <Button
-                            variant="primary"
-                            onClick={exportData}
-                        >
+                        <Button variant="primary" onClick={exportData}>
                             Export
                         </Button>
                     </>
@@ -418,17 +431,10 @@ const Settings = () => {
                 title="Reset to Demo Data"
                 actions={
                     <>
-                        <Button
-                            variant="outline"
-                            onClick={() => closeModal('reset')}
-                        >
+                        <Button variant="outline" onClick={() => closeModal('reset')}>
                             Cancel
                         </Button>
-                        <Button
-                            variant="danger"
-                            onClick={resetData}
-                            disabled={isResetting}
-                        >
+                        <Button variant="danger" onClick={resetData} disabled={isResetting}>
                             {isResetting ? 'Resetting...' : 'Reset All Data'}
                         </Button>
                     </>
@@ -440,7 +446,8 @@ const Settings = () => {
                     </div>
                     <h3>Warning: This action cannot be undone</h3>
                     <p>
-                        You are about to delete all your current data from Firebase and restore the default demo content, including:
+                        You are about to delete all your current data from Firebase and restore
+                        the default demo content, including:
                     </p>
                     <ul>
                         <li>All research topics and notes</li>
