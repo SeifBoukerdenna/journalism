@@ -7,7 +7,8 @@ import Modal from '../components/common/Modal';
 import EmptyState from '../components/common/EmptyState';
 import ConfirmationDialog from '../components/common/ConfirmationDialog';
 import { useModal } from '../hooks/useModal';
-import { showSuccessToast, showErrorToast } from '../utils/toastService';
+import { showErrorToast } from '../utils/toastService';
+import * as firebaseService from '../firebase/firebaseService';
 
 interface TopicFormData {
     title: string;
@@ -62,6 +63,7 @@ const ResearchHub = () => {
     const [selectedNote, setSelectedNote] = useState<string | null>(null);
     const [activeFilter, setActiveFilter] = useState<string>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [isSaving, setIsSaving] = useState(false);
 
     // Form data
     const [topicFormData, setTopicFormData] = useState<TopicFormData>({
@@ -120,26 +122,27 @@ const ResearchHub = () => {
     });
 
     // Toggle a topic as favorite
-    const toggleFavorite = (topicId: string, e: React.MouseEvent) => {
+    const toggleFavorite = async (topicId: string, e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent triggering the topic selection
 
         const topic = topics.find(t => t.id === topicId);
         if (!topic) return;
 
-        if (favoriteTopics.includes(topicId)) {
-            removeFromFavorites(topicId);
-            // Update in the database
-            updateTopic(topicId, { isFavorite: false }).catch(error => {
-                console.error("Error updating favorite status in database:", error);
-                showErrorToast("Failed to update favorite status");
-            });
-        } else {
-            addToFavorites(topicId);
-            // Update in the database
-            updateTopic(topicId, { isFavorite: true }).catch(error => {
-                console.error("Error updating favorite status in database:", error);
-                showErrorToast("Failed to update favorite status");
-            });
+        try {
+            if (favoriteTopics.includes(topicId)) {
+                // Update in Firebase first
+                await firebaseService.updateTopic(topicId, { isFavorite: false });
+                // Then update local state
+                removeFromFavorites(topicId);
+            } else {
+                // Update in Firebase first
+                await firebaseService.updateTopic(topicId, { isFavorite: true });
+                // Then update local state
+                addToFavorites(topicId);
+            }
+        } catch (error) {
+            console.error("Error updating favorite status in database:", error);
+            showErrorToast("Failed to update favorite status");
         }
     };
 
@@ -196,63 +199,75 @@ const ResearchHub = () => {
     }, [selectedNote, isNoteModalOpen, researchNotes]);
 
     // Handle form submissions
-    const handleTopicSubmit = (e: React.FormEvent) => {
+    const handleTopicSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
+
         try {
             if (selectedTopic) {
-                updateTopic(selectedTopic, topicFormData);
+                // Update in Firebase first
+                await updateTopic(selectedTopic, topicFormData);
 
-                // Update favorite status if changed
+                // Handle favorite status separately for better synchronization
                 if (topicFormData.isFavorite && !favoriteTopics.includes(selectedTopic)) {
                     addToFavorites(selectedTopic);
+                    await firebaseService.saveFavoriteTopics([...favoriteTopics, selectedTopic]);
                 } else if (!topicFormData.isFavorite && favoriteTopics.includes(selectedTopic)) {
                     removeFromFavorites(selectedTopic);
+                    await firebaseService.saveFavoriteTopics(favoriteTopics.filter(id => id !== selectedTopic));
                 }
-
-                showSuccessToast('Topic updated successfully');
             } else {
-                addTopic({
+                // Create new topic in Firebase
+                const newTopic = await addTopic({
                     ...topicFormData,
                     tags: topicFormData.tags
-                }).then((newTopic: any) => {
-                    // If the new topic should be a favorite
-                    if (topicFormData.isFavorite && newTopic && newTopic.id) {
-                        addToFavorites(newTopic.id);
-                    }
                 });
-                showSuccessToast('Topic created successfully');
+
+                // If the new topic should be a favorite, update favorites in Firebase
+                if (topicFormData.isFavorite && newTopic && newTopic.id) {
+                    addToFavorites(newTopic.id);
+                    await firebaseService.saveFavoriteTopics([...favoriteTopics, newTopic.id]);
+                }
             }
+
             closeTopicModal();
             setSelectedTopic(null);
         } catch (error) {
             showErrorToast('Error saving topic');
             console.error('Error saving topic:', error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
-    const handleNoteSubmit = (e: React.FormEvent) => {
+    const handleNoteSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
+
         try {
             const cleanedSources = noteFormData.sources.filter(source => source.trim() !== '');
 
             if (selectedNote) {
-                updateResearchNote(selectedNote, {
+                // Update in Firebase
+                await updateResearchNote(selectedNote, {
                     ...noteFormData,
                     sources: cleanedSources
                 });
-                showSuccessToast('Research note updated successfully');
             } else {
-                addResearchNote({
+                // Create in Firebase
+                await addResearchNote({
                     ...noteFormData,
                     sources: cleanedSources
                 });
-                showSuccessToast('Research note created successfully');
             }
+
             closeNoteModal();
             setSelectedNote(null);
         } catch (error) {
             showErrorToast('Error saving research note');
             console.error('Error saving research note:', error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -334,12 +349,14 @@ const ResearchHub = () => {
     };
 
     // Handle actual topic deletion after confirmation
-    const handleDeleteTopic = () => {
+    const handleDeleteTopic = async () => {
         if (!topicToDelete) return;
 
         try {
-            deleteTopic(topicToDelete);
+            // Delete topic from Firebase and related notes
+            await deleteTopic(topicToDelete);
 
+            // If the deleted topic was selected, clear selection
             if (selectedTopic === topicToDelete) {
                 setSelectedTopic(null);
             }
@@ -353,11 +370,12 @@ const ResearchHub = () => {
     };
 
     // Handle actual note deletion after confirmation
-    const handleDeleteNote = () => {
+    const handleDeleteNote = async () => {
         if (!noteToDelete) return;
 
         try {
-            deleteResearchNote(noteToDelete);
+            // Delete note from Firebase
+            await deleteResearchNote(noteToDelete);
             setShowNoteDeleteConfirm(false);
             setNoteToDelete(null);
         } catch (error) {
@@ -614,15 +632,16 @@ const ResearchHub = () => {
                                 closeTopicModal();
                                 setSelectedTopic(null);
                             }}
+                            disabled={isSaving}
                         >
                             Cancel
                         </Button>
                         <Button
                             variant="primary"
                             onClick={handleTopicSubmit}
-                            disabled={!topicFormData.title}
+                            disabled={!topicFormData.title || isSaving}
                         >
-                            {selectedTopic ? "Update" : "Create"}
+                            {isSaving ? "Saving..." : selectedTopic ? "Update" : "Create"}
                         </Button>
                     </>
                 }
@@ -709,15 +728,16 @@ const ResearchHub = () => {
                                 closeNoteModal();
                                 setSelectedNote(null);
                             }}
+                            disabled={isSaving}
                         >
                             Cancel
                         </Button>
                         <Button
                             variant="primary"
                             onClick={handleNoteSubmit}
-                            disabled={!noteFormData.title || !noteFormData.topicId}
+                            disabled={!noteFormData.title || !noteFormData.topicId || isSaving}
                         >
-                            {selectedNote ? "Update" : "Save"}
+                            {isSaving ? "Saving..." : selectedNote ? "Update" : "Save"}
                         </Button>
                     </>
                 }

@@ -4,7 +4,6 @@ import {
   getDocs,
   writeBatch,
   doc,
-  serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "./config";

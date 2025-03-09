@@ -1,7 +1,7 @@
 // src/contexts/AppContext.tsx
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import * as firebaseService from '../firebase/firebaseService';
-import { initializeFirebaseData } from '../firebase/initializeFirebaseData';
+// import { initializeFirebaseData } from '../firebase/initializeFirebaseData';
 import { showSuccessToast, showErrorToast } from '../utils/toastService';
 
 interface Topic {
@@ -136,7 +136,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
             setIsLoading(true);
             try {
                 // Initialize Firebase with sample data if collections are empty
-                await initializeFirebaseData();
+                // await initializeFirebaseData();
 
                 // Load user settings first
                 const settings = await firebaseService.getUserSettings();
